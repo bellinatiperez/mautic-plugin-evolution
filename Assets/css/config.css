@@ -1,0 +1,424 @@
+/* Evolution Config Styles */
+
+.evolution-config {
+    padding: 20px 0;
+}
+
+/* Connection Status Panel */
+.evolution-config .panel-success,
+.evolution-config .panel-danger {
+    border-width: 2px;
+}
+
+.evolution-config .panel-success .panel-heading,
+.evolution-config .panel-danger .panel-heading {
+    font-weight: 600;
+}
+
+.evolution-config .panel-success .panel-heading .fa,
+.evolution-config .panel-danger .panel-heading .fa {
+    margin-right: 8px;
+}
+
+/* Form Styling */
+.evolution-config fieldset {
+    border: 1px solid #e3e3e3;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 25px;
+    background-color: #fafafa;
+}
+
+.evolution-config fieldset legend {
+    font-weight: 600;
+    color: #495057;
+    border-bottom: none;
+    margin-bottom: 15px;
+    padding: 0 10px;
+    width: auto;
+    font-size: 1.1em;
+}
+
+.evolution-config .form-group {
+    margin-bottom: 20px;
+}
+
+.evolution-config .form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+}
+
+.evolution-config .form-control {
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+    padding: 10px 12px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.evolution-config .form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.evolution-config .help-block {
+    font-size: 0.875em;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+/* Checkbox and Radio Styling */
+.evolution-config .checkbox,
+.evolution-config .radio {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.evolution-config .checkbox label,
+.evolution-config .radio label {
+    font-weight: normal;
+    cursor: pointer;
+    padding-left: 25px;
+}
+
+.evolution-config .checkbox input[type="checkbox"],
+.evolution-config .radio input[type="radio"] {
+    margin-left: -25px;
+    margin-top: 4px;
+}
+
+/* Form Actions */
+.evolution-config .form-actions {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 20px;
+    margin: 20px -20px -20px -20px;
+    border-radius: 0 0 5px 5px;
+}
+
+.evolution-config .form-actions .btn {
+    margin-right: 10px;
+    margin-bottom: 5px;
+}
+
+/* Sidebar Panels */
+.evolution-config .panel-info .panel-heading,
+.evolution-config .panel-default .panel-heading {
+    font-weight: 600;
+}
+
+.evolution-config .list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 12px 15px;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.evolution-config .list-group-item:hover {
+    background-color: #f8f9fa;
+}
+
+.evolution-config .list-group-item .fa {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+/* Quick Stats */
+.evolution-config .quick-stats h4 {
+    font-size: 1.8em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+.evolution-config .quick-stats small {
+    color: #6c757d;
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Webhook Status */
+.evolution-config .webhook-status .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.evolution-config .webhook-status .label {
+    font-size: 0.75em;
+    padding: 3px 6px;
+}
+
+.evolution-config .webhook-status small {
+    width: 100%;
+    margin-top: 5px;
+    color: #6c757d;
+}
+
+/* Modal Styling */
+.evolution-config .modal-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.evolution-config .modal-title {
+    font-weight: 600;
+    color: #495057;
+}
+
+.evolution-config .modal-body h5 {
+    color: #495057;
+    font-weight: 600;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.evolution-config .modal-body h5:first-child {
+    margin-top: 0;
+}
+
+.evolution-config .modal-body .alert {
+    margin-top: 20px;
+}
+
+.evolution-config .modal-body code {
+    background-color: #f8f9fa;
+    color: #e83e8c;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+/* Accordion Styling */
+.evolution-config .panel-group .panel {
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.evolution-config .panel-group .panel-heading {
+    border-radius: 4px 4px 0 0;
+}
+
+.evolution-config .panel-group .panel-title a {
+    text-decoration: none;
+    color: #495057;
+    font-weight: 500;
+}
+
+.evolution-config .panel-group .panel-title a:hover {
+    color: #007bff;
+}
+
+.evolution-config .panel-group .panel-body ul {
+    margin-bottom: 0;
+    padding-left: 20px;
+}
+
+.evolution-config .panel-group .panel-body li {
+    margin-bottom: 8px;
+    color: #6c757d;
+}
+
+/* Button Styling */
+.evolution-config .btn {
+    border-radius: 4px;
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all 0.15s ease-in-out;
+}
+
+.evolution-config .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.evolution-config .btn-block {
+    width: 100%;
+}
+
+.evolution-config .btn .fa {
+    margin-right: 5px;
+}
+
+/* Loading States */
+.evolution-config .loading {
+    position: relative;
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.evolution-config .loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Status Labels */
+.evolution-config .label {
+    font-size: 0.8em;
+    padding: 4px 8px;
+    border-radius: 3px;
+}
+
+.evolution-config .label-success {
+    background-color: #28a745;
+}
+
+.evolution-config .label-danger {
+    background-color: #dc3545;
+}
+
+.evolution-config .label-default {
+    background-color: #6c757d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .evolution-config fieldset {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    
+    .evolution-config .form-actions {
+        text-align: center;
+    }
+    
+    .evolution-config .form-actions .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    .evolution-config .quick-stats {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .evolution-config .webhook-status .list-group-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .evolution-config .webhook-status .label {
+        margin-top: 5px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .evolution-config fieldset {
+        background-color: #2c3e50;
+        border-color: #34495e;
+    }
+    
+    .evolution-config fieldset legend {
+        color: #ecf0f1;
+    }
+    
+    .evolution-config .form-group label {
+        color: #ecf0f1;
+    }
+    
+    .evolution-config .form-control {
+        background-color: #34495e;
+        border-color: #34495e;
+        color: #ecf0f1;
+    }
+    
+    .evolution-config .form-control:focus {
+        background-color: #34495e;
+        border-color: #5dade2;
+        color: #ecf0f1;
+    }
+    
+    .evolution-config .help-block {
+        color: #bdc3c7;
+    }
+    
+    .evolution-config .form-actions {
+        background-color: #34495e;
+        border-color: #34495e;
+    }
+    
+    .evolution-config .panel-default {
+        background-color: #2c3e50;
+        border-color: #34495e;
+    }
+    
+    .evolution-config .panel-default .panel-heading {
+        background-color: #34495e;
+        border-color: #34495e;
+        color: #ecf0f1;
+    }
+    
+    .evolution-config .panel-default .panel-body {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+    }
+    
+    .evolution-config .list-group-item {
+        background-color: #2c3e50;
+        border-color: #34495e;
+        color: #ecf0f1;
+    }
+    
+    .evolution-config .list-group-item:hover {
+        background-color: #34495e;
+    }
+    
+    .evolution-config .modal-content {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+    }
+    
+    .evolution-config .modal-header {
+        background-color: #34495e;
+        border-color: #34495e;
+    }
+}
+
+/* Animation Effects */
+.evolution-config .panel {
+    transition: all 0.3s ease;
+}
+
+.evolution-config .panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Form Validation States */
+.evolution-config .has-error .form-control {
+    border-color: #dc3545;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+}
+
+.evolution-config .has-error .form-control:focus {
+    border-color: #dc3545;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 6px rgba(220,53,69,.6);
+}
+
+.evolution-config .has-success .form-control {
+    border-color: #28a745;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075);
+}
+
+.evolution-config .has-success .form-control:focus {
+    border-color: #28a745;
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 6px rgba(40,167,69,.6);
+}
