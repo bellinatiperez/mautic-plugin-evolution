@@ -1,5 +1,5 @@
 {
-    "name": "mautic/evolution-analytics-bundle",
+    "name": "bellinatiperez/evolution-analytics-bundle",
     "description": "Evolution WhatsApp Integration for Mautic",
     "type": "mautic-plugin",
     "version": "1.0.0",
@@ -11,8 +11,7 @@
         }
     ],
     "require": {
-        "php": ">=7.4",
-        "mautic/core": "^4.0|^5.0"
+        "php": ">=7.4"
     },
     "autoload": {
         "psr-4": {
