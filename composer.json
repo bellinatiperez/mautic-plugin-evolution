@@ -1,5 +1,5 @@
 {
-    "name": "bellinatiperez/evolution-analytics-bundle",
+    "name": "bellinatiperez/mautic-plugin-evolution",
     "description": "Evolution WhatsApp Integration for Mautic",
     "type": "mautic-plugin",
     "keywords": [
