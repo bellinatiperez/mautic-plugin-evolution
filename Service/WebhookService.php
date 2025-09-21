@@ -1,8 +1,8 @@
 <?php
 
-namespace MauticPlugin\EvolutionAnalyticsBundle\Service;
+namespace MauticPlugin\EvolutionWhatsAppBundle\Service;
 
-use MauticPlugin\EvolutionAnalyticsBundle\Model\AnalyticsModel;
+use MauticPlugin\EvolutionWhatsAppBundle\Model\AnalyticsModel;
 use Mautic\LeadBundle\Model\LeadModel;
 use Psr\Log\LoggerInterface;
 

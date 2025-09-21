@@ -1,15 +1,15 @@
 <?php
 
-namespace MauticPlugin\EvolutionAnalyticsBundle;
+namespace MauticPlugin\EvolutionWhatsAppBundle;
 
 use Mautic\PluginBundle\Bundle\PluginBundleBase;
 
 /**
- * Evolution Analytics Bundle for Mautic
+ * Evolution WhatsApp Bundle for Mautic
  * 
  * This plugin provides integration with Evolution API for WhatsApp analytics
  * and data analysis within Mautic marketing automation platform.
  */
-class EvolutionAnalyticsBundle extends PluginBundleBase
+class EvolutionWhatsAppBundle extends PluginBundleBase
 {
 }

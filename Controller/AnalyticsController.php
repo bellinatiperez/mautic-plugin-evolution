@@ -1,10 +1,10 @@
 <?php
 
-namespace MauticPlugin\EvolutionAnalyticsBundle\Controller;
+namespace MauticPlugin\EvolutionWhatsAppBundle\Controller;
 
 use Mautic\CoreBundle\Controller\AbstractStandardFormController;
-use MauticPlugin\EvolutionAnalyticsBundle\Model\AnalyticsModel;
-use MauticPlugin\EvolutionAnalyticsBundle\Service\EvolutionApiService;
+use MauticPlugin\EvolutionWhatsAppBundle\Model\AnalyticsModel;
+use MauticPlugin\EvolutionWhatsAppBundle\Service\EvolutionApiService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

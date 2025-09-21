@@ -119,7 +119,7 @@ return [
         'events' => [
 
             'mautic.evolution.subscriber.lead' => [
-                'class'     => \MauticPlugin\EvolutionAnalyticsBundle\EventListener\LeadSubscriber::class,
+                'class'     => \MauticPlugin\EvolutionWhatsAppBundle\EventListener\LeadSubscriber::class,
                 'arguments' => [
                     'mautic.evolution.service.api',
                     'mautic.evolution.model.analytics',
@@ -129,7 +129,7 @@ return [
         ],
         'forms' => [
             'mautic.evolution.form.type.config' => [
-                'class'     => \MauticPlugin\EvolutionAnalyticsBundle\Form\Type\ConfigType::class,
+                'class'     => \MauticPlugin\EvolutionWhatsAppBundle\Form\Type\ConfigType::class,
                 'arguments' => [
                     'translator',
                 ],
@@ -139,7 +139,7 @@ return [
         ],
         'integrations' => [
             'mautic.evolution.integration.evolution' => [
-                'class'     => \MauticPlugin\EvolutionAnalyticsBundle\Integration\EvolutionIntegration::class,
+                'class'     => \MauticPlugin\EvolutionWhatsAppBundle\Integration\EvolutionIntegration::class,
                 'arguments' => [
                     'event_dispatcher',
                     'mautic.helper.cache_storage',
@@ -165,7 +165,7 @@ return [
         ],
         'other' => [
             'mautic.evolution.service.api' => [
-                'class'     => \MauticPlugin\EvolutionAnalyticsBundle\Service\EvolutionApiService::class,
+                'class'     => \MauticPlugin\EvolutionWhatsAppBundle\Service\EvolutionApiService::class,
                 'arguments' => [
                     'mautic.helper.integration',
                     'monolog.logger.mautic',
@@ -173,7 +173,7 @@ return [
                 ],
             ],
             'mautic.evolution.service.webhook' => [
-                'class'     => \MauticPlugin\EvolutionAnalyticsBundle\Service\WebhookService::class,
+                'class'     => \MauticPlugin\EvolutionWhatsAppBundle\Service\WebhookService::class,
                 'arguments' => [
                     'mautic.evolution.service.api',
                     'mautic.evolution.model.analytics',
@@ -183,7 +183,7 @@ return [
                 ],
             ],
             'mautic.evolution.model.analytics' => [
-                'class'     => \MauticPlugin\EvolutionAnalyticsBundle\Model\AnalyticsModel::class,
+                'class'     => \MauticPlugin\EvolutionWhatsAppBundle\Model\AnalyticsModel::class,
                 'arguments' => [
                     'doctrine.orm.entity_manager',
                     'monolog.logger.mautic',

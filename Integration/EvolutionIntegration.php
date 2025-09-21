@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\EvolutionAnalyticsBundle\Integration;
+namespace MauticPlugin\EvolutionWhatsAppBundle\Integration;
 
 use Mautic\PluginBundle\Integration\AbstractIntegration;
 use Symfony\Component\Form\Extension\Core\Type\TextType;

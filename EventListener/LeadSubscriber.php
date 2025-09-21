@@ -1,12 +1,12 @@
 <?php
 
-namespace MauticPlugin\EvolutionAnalyticsBundle\EventListener;
+namespace MauticPlugin\EvolutionWhatsAppBundle\EventListener;
 
 use Mautic\LeadBundle\Event\LeadEvent;
 use Mautic\LeadBundle\Event\LeadMergeEvent;
 use Mautic\LeadBundle\LeadEvents;
-use MauticPlugin\EvolutionAnalyticsBundle\Model\AnalyticsModel;
-use MauticPlugin\EvolutionAnalyticsBundle\Service\EvolutionApiService;
+use MauticPlugin\EvolutionWhatsAppBundle\Model\AnalyticsModel;
+use MauticPlugin\EvolutionWhatsAppBundle\Service\EvolutionApiService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**

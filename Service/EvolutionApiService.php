@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\EvolutionAnalyticsBundle\Service;
+namespace MauticPlugin\EvolutionWhatsAppBundle\Service;
 
 use GuzzleHttp\Client;
 use Psr\Log\LoggerInterface;

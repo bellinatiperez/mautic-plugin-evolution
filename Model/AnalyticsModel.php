@@ -1,6 +1,6 @@
 <?php
 
-namespace MauticPlugin\EvolutionAnalyticsBundle\Model;
+namespace MauticPlugin\EvolutionWhatsAppBundle\Model;
 
 use Doctrine\DBAL\Connection;
 use Mautic\CoreBundle\Model\AbstractCommonModel;

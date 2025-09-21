@@ -1,12 +1,12 @@
 <?php
 
-namespace MauticPlugin\EvolutionAnalyticsBundle\EventListener;
+namespace MauticPlugin\EvolutionWhatsAppBundle\EventListener;
 
 use Mautic\CoreBundle\EventListener\CommonSubscriber;
 use Mautic\WebhookBundle\Event\WebhookBuilderEvent;
 use Mautic\WebhookBundle\Event\WebhookEvent;
 use Mautic\WebhookBundle\WebhookEvents;
-use MauticPlugin\EvolutionAnalyticsBundle\Service\WebhookService;
+use MauticPlugin\EvolutionWhatsAppBundle\Service\WebhookService;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
