@@ -2,26 +2,24 @@
     "name": "bellinatiperez/evolution-analytics-bundle",
     "description": "Evolution WhatsApp Integration for Mautic",
     "type": "mautic-plugin",
-    "version": "1.0.0",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Evolution Team",
-            "email": "support@evolution.com"
-        }
+    "keywords": [
+        "mautic",
+        "plugin",
+        "integration"
     ],
-    "require": {
-        "php": ">=7.4"
-    },
-    "autoload": {
-        "psr-4": {
-            "MauticPlugin\\EvolutionAnalyticsBundle\\": ""
-        }
-    },
     "extra": {
         "mautic": {
             "name": "Evolution WhatsApp Integration",
             "description": "Integração completa entre Mautic e Evolution API para WhatsApp Business"
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {
+        "mautic/core-lib": "7.x-dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "MauticPlugin\\EvolutionAnalyticsBundle\\": ""
         }
     }
 }
