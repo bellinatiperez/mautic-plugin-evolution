@@ -132,7 +132,6 @@ php bin/console doctrine:schema:update --force
 $config = [
     'evolution_api_url' => 'https://sua-evolution-api.com',
     'evolution_api_key' => 'sua-api-key-aqui',
-    'evolution_instance' => 'minha-instancia',
     'evolution_timeout' => 30,
     'evolution_webhook_enabled' => true,
     'evolution_debug_mode' => false
@@ -143,16 +142,15 @@ $config = [
 
 1. **Configure o Webhook na Evolution API**:
 ```bash
-curl -X POST "https://sua-evolution-api.com/webhook/set/sua-instancia" \
+curl -X POST "https://sua-evolution-api.com/external-webhook/create" \
   -H "Content-Type: application/json" \
   -H "apikey: sua-api-key" \
   -d '{
-    "webhook": "https://seu-mautic.com/webhook/evolution/receive",
-    "events": [
-      "MESSAGES_UPSERT",
-      "MESSAGES_UPDATE", 
-      "SEND_MESSAGE"
-    ]
+    "name": "Update event send",
+    "url": "http://seu.mautic/webhook/evolution/receive",
+    "enabled": true,
+    "events": ["messages.update"],
+    "description": "Webhook para testar evento MESSAGES_UPDATE"
   }'
 ```
 
@@ -601,4 +599,4 @@ php bin/console test plugins/MauticEvolutionBundle/Tests/
 
 ---
 
-**Desenvolvido com ❤️ pela Comunidade Mautic**
+**Desenvolvido com ❤️ pela equipe Soluções Digitais
