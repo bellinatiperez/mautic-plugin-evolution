@@ -1,0 +1,108 @@
+{#
+  Variables
+    - item
+    - permissions
+#}
+{% extends '@MauticCore/Default/content.html.twig' %}
+
+{% block mauticContent %}evolution_template{% endblock %}
+
+{% block indexButton %}
+{{ include('@MauticCore/Helper/page_actions.html.twig', {
+    'item': item,
+    'templateButtons': {
+        'close': securityHasEntityAccess(permissions['evolution:templates:viewown'], permissions['evolution:templates:viewother'], item.createdBy),
+    },
+    'routeBase': 'evolution_template',
+    'langVar': 'mautic.evolution.template',
+    'targetLabel': 'Evolution Templates'
+}) }}
+{% endblock %}
+
+{% block headerTitle %}{{ item.name }}{% endblock %}
+
+{% block actions %}
+    {{ include('@MauticCore/Helper/page_actions.html.twig', {
+            'item': item,
+            'templateButtons': {
+                'edit': securityHasEntityAccess(permissions['evolution:templates:editown'], permissions['evolution:templates:editother'], item.createdBy),
+                'clone': permissions['evolution:templates:create'],
+                'delete': securityHasEntityAccess(permissions['evolution:templates:deleteown'], permissions['evolution:templates:deleteother'], item.createdBy),
+            },
+            'routeBase': 'evolution_template',
+            'langVar': 'mautic.evolution.template'
+        }) }}
+{% endblock %}
+
+{% block content %}
+<div class="box-layout">
+    <div class="col-md-9 bg-white height-auto">
+        <div class="bg-auto">
+            <!-- Debug info -->
+            <div class="pa-md">
+                <div class="alert alert-info">
+                    <strong>Debug Info:</strong><br>
+                    Template ID: {{ item.id }}<br>
+                    Template Name: {{ item.name }}<br>
+                    Template Type: {{ item.type }}<br>
+                    Is Active: {{ item.isActive ? 'Yes' : 'No' }}
+                </div>
+            </div>
+
+            <!-- template details -->
+            <div class="pa-md">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel">
+                            <div class="panel-body">
+                                <h4>Content</h4>
+                                <div class="well">
+                                    {% if item.content %}
+                                        {{ item.content|nl2br }}
+                                    {% else %}
+                                        <em>No content available</em>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if item.variables %}
+                                <h4>Variables</h4>
+                                <div class="well">
+                                    {% for variable in item.variables %}
+                                        <span class="label label-default">{{ variable }}</span>
+                                    {% endfor %}
+                                </div>
+                                {% else %}
+                                <h4>Variables</h4>
+                                <div class="well">
+                                    <em>No variables defined</em>
+                                </div>
+                                {% endif %}
+
+                                <h4>Type</h4>
+                                <div class="well">
+                                    {{ item.type }}
+                                </div>
+
+                                <h4>Status</h4>
+                                <div class="well">
+                                    {% if item.isActive %}
+                                        <span class="label label-success">Active</span>
+                                    {% else %}
+                                        <span class="label label-danger">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--/ template details -->
+        </div>
+    </div>
+    <div class="col-md-3 bg-white bdr-l height-auto">
+        <div class="pr-lg pl-lg pt-md pb-md">
+            {{ include('@MauticCore/Helper/details.html.twig', {'entity': item}) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

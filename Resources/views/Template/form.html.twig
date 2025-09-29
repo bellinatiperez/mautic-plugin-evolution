@@ -1,0 +1,86 @@
+{% extends '@MauticCore/FormTheme/form_simple.html.twig' %}
+
+{% block mauticContent %}evolution_template{% endblock %}
+
+{% block headerTitle %}
+    {% if entity.id %}
+        {{ 'mautic.evolution.template.edit'|trans({'%name%': entity.name}) }}
+    {% else %}
+        {{ 'mautic.evolution.template.new'|trans }}
+    {% endif %}
+{% endblock %}
+
+{% block primaryFormContent %}
+<div class="row">
+    <div class="col-md-6">
+        {{ form_row(form.name) }}
+    </div>
+    <div class="col-md-6">
+        {{ form_row(form.type) }}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        {{ form_row(form.description) }}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        {{ form_row(form.content) }}
+        <div class="help-block">
+            {{ 'mautic.evolution.template.form.content.help'|trans }}
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        {{ form_row(form.variables) }}
+        <div class="help-block">
+            {{ 'mautic.evolution.template.form.variables.help'|trans }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block rightFormContent %}
+{{ form_row(form.isActive) }}
+
+{% if entity.id %}
+    <hr class="mnr-md mnl-md">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">{{ 'mautic.evolution.template.stats'|trans }}</h3>
+        </div>
+        <div class="panel-body">
+            <div class="row">
+                <div class="col-xs-6">
+                    <strong>{{ 'mautic.core.created'|trans }}:</strong>
+                </div>
+                <div class="col-xs-6 text-right">
+                    {{ entity.dateAdded|date('Y-m-d H:i') }}
+                </div>
+            </div>
+            {% if entity.dateModified %}
+                <div class="row">
+                    <div class="col-xs-6">
+                        <strong>{{ 'mautic.core.modified'|trans }}:</strong>
+                    </div>
+                    <div class="col-xs-6 text-right">
+                        {{ entity.dateModified|date('Y-m-d H:i') }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% else %}
+    <hr class="mnr-md mnl-md">
+    <p class="text-muted">{{ 'mautic.evolution.template.stats.new'|trans }}</p>
+{% endif %}
+
+<div class="hide">
+    {{ form_rest(form) }}
+</div>
+{% endblock %}

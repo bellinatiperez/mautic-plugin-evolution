@@ -1,0 +1,187 @@
+{% extends '@MauticCore/Default/content.html.twig' %}
+
+{% block mauticContent %}
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        <h3 class="panel-title">
+            <i class="fa fa-whatsapp"></i>
+            {{ 'mautic.evolution.config.header'|trans }}
+        </h3>
+    </div>
+    <div class="panel-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="alert alert-info">
+                    <i class="fa fa-info-circle"></i>
+                    {{ 'mautic.evolution.config.description'|trans }}
+                </div>
+
+                {% if form is defined %}
+                    {{ form_start(form) }}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form_label(form.evolution_api_url) }}
+                                {{ form_widget(form.evolution_api_url) }}
+                                {{ form_errors(form.evolution_api_url) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form_label(form.evolution_api_key) }}
+                                {{ form_widget(form.evolution_api_key) }}
+                                {{ form_errors(form.evolution_api_key) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form_label(form.evolution_instance) }}
+                                {{ form_widget(form.evolution_instance) }}
+                                {{ form_errors(form.evolution_instance) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form_label(form.evolution_timeout) }}
+                                {{ form_widget(form.evolution_timeout) }}
+                                {{ form_errors(form.evolution_timeout) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form_widget(form.evolution_webhook_enabled) }}
+                                {{ form_label(form.evolution_webhook_enabled) }}
+                                {{ form_errors(form.evolution_webhook_enabled) }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                {{ form_widget(form.evolution_debug_mode) }}
+                                {{ form_label(form.evolution_debug_mode) }}
+                                {{ form_errors(form.evolution_debug_mode) }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fa fa-save"></i>
+                            {{ 'mautic.core.form.save'|trans }}
+                        </button>
+                        <button type="button" class="btn btn-default" id="test-connection">
+                            <i class="fa fa-plug"></i>
+                            {{ 'mautic.evolution.config.test_connection'|trans }}
+                        </button>
+                    </div>
+
+                    {{ form_end(form) }}
+                {% endif %}
+            </div>
+            
+            <div class="col-md-4">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-info"></i>
+                            {{ 'mautic.evolution.config.status.title'|trans }}
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <div id="connection-status">
+                            <div class="text-center">
+                                <i class="fa fa-spinner fa-spin"></i>
+                                {{ 'mautic.evolution.config.status.checking'|trans }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">
+                            <i class="fa fa-question-circle"></i>
+                            {{ 'mautic.evolution.config.help.title'|trans }}
+                        </h4>
+                    </div>
+                    <div class="panel-body">
+                        <ul class="list-unstyled">
+                            <li><i class="fa fa-check text-success"></i> {{ 'mautic.evolution.config.help.api_url'|trans }}</li>
+                            <li><i class="fa fa-check text-success"></i> {{ 'mautic.evolution.config.help.api_key'|trans }}</li>
+                            <li><i class="fa fa-check text-success"></i> {{ 'mautic.evolution.config.help.instance'|trans }}</li>
+                            <li><i class="fa fa-check text-success"></i> {{ 'mautic.evolution.config.help.webhook'|trans }}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Test connection button
+    document.getElementById('test-connection').addEventListener('click', function() {
+        const button = this;
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<i class="fa fa-spinner fa-spin"></i> {{ "mautic.evolution.config.testing"|trans }}';
+        button.disabled = true;
+        
+        fetch('{{ path("mautic_evolution_config_test") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                Mautic.showNotification('{{ "mautic.evolution.config.test.success"|trans }}', 'success');
+            } else {
+                Mautic.showNotification(data.error || '{{ "mautic.evolution.config.test.error"|trans }}', 'error');
+            }
+        })
+        .catch(error => {
+            Mautic.showNotification('{{ "mautic.evolution.config.test.error"|trans }}', 'error');
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    });
+    
+    // Check connection status on page load
+    checkConnectionStatus();
+});
+
+function checkConnectionStatus() {
+    fetch('{{ path("mautic_evolution_config_status") }}', {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const statusDiv = document.getElementById('connection-status');
+        if (data.connected) {
+            statusDiv.innerHTML = '<div class="text-success"><i class="fa fa-check-circle"></i> {{ "mautic.evolution.config.status.connected"|trans }}</div>';
+        } else {
+            statusDiv.innerHTML = '<div class="text-danger"><i class="fa fa-times-circle"></i> {{ "mautic.evolution.config.status.disconnected"|trans }}</div>';
+        }
+    })
+    .catch(error => {
+        const statusDiv = document.getElementById('connection-status');
+        statusDiv.innerHTML = '<div class="text-warning"><i class="fa fa-exclamation-triangle"></i> {{ "mautic.evolution.config.status.unknown"|trans }}</div>';
+    });
+}
+</script>
+{% endblock %}

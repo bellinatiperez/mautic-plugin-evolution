@@ -1,0 +1,31 @@
+{
+    "name": "mautic/evolution-bundle",
+    "description": "Mautic Evolution API Integration Plugin",
+    "type": "mautic-plugin",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Mautic Evolution Team",
+            "email": "support@mautic.org"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "guzzlehttp/guzzle": "^7.0",
+        "symfony/http-foundation": "^6.0",
+        "doctrine/orm": "^2.14"
+    },
+    "autoload": {
+        "psr-4": {
+            "MauticPlugin\\MauticEvolutionBundle\\": ""
+        }
+    },
+    "extra": {
+        "mautic": {
+            "name": "Evolution API Integration",
+            "description": "Integração com Evolution API para envio de mensagens WhatsApp",
+            "version": "1.0.0",
+            "author": "Mautic Evolution Team"
+        }
+    }
+}

@@ -1,0 +1,183 @@
+/* Evolution API Plugin Styles */
+
+.evolution-config-widget {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #e9ecef;
+}
+
+.evolution-send-message-widget,
+.evolution-send-template-widget {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #e9ecef;
+}
+
+/* WhatsApp Brand Colors */
+.whatsapp-primary {
+    color: #25D366 !important;
+}
+
+.whatsapp-bg {
+    background-color: #25D366 !important;
+}
+
+.btn-whatsapp {
+    background-color: #25D366;
+    border-color: #25D366;
+    color: white;
+}
+
+.btn-whatsapp:hover {
+    background-color: #128C7E;
+    border-color: #128C7E;
+    color: white;
+}
+
+/* Template Status Labels */
+.label-template-text {
+    background-color: #5bc0de;
+}
+
+.label-template-media {
+    background-color: #f0ad4e;
+}
+
+.label-template-interactive {
+    background-color: #5cb85c;
+}
+
+/* Connection Status */
+.connection-status-connected {
+    color: #5cb85c;
+}
+
+.connection-status-disconnected {
+    color: #d9534f;
+}
+
+.connection-status-unknown {
+    color: #f0ad4e;
+}
+
+/* Template Form Enhancements */
+.template-variables-help {
+    background: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    border-radius: 4px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.template-variables-help code {
+    background: #fff;
+    padding: 2px 4px;
+    border-radius: 3px;
+    border: 1px solid #ddd;
+}
+
+/* Config Page Enhancements */
+.evolution-config-status {
+    text-align: center;
+    padding: 20px;
+}
+
+.evolution-config-status .fa-spinner {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.evolution-config-help {
+    background: #f8f9fa;
+    border-radius: 5px;
+    padding: 15px;
+}
+
+.evolution-config-help ul {
+    margin-bottom: 0;
+}
+
+.evolution-config-help li {
+    margin-bottom: 8px;
+}
+
+/* Template List Enhancements */
+.template-list-item {
+    transition: background-color 0.2s ease;
+}
+
+.template-list-item:hover {
+    background-color: #f8f9fa;
+}
+
+.template-description {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin-top: 5px;
+}
+
+/* Form Theme Enhancements */
+.evolution-form-group {
+    margin-bottom: 20px;
+}
+
+.evolution-form-label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.evolution-help-text {
+    color: #6c757d;
+    font-size: 0.875em;
+    margin-top: 5px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .evolution-config-widget {
+        padding: 15px;
+    }
+    
+    .evolution-send-message-widget,
+    .evolution-send-template-widget {
+        padding: 10px;
+    }
+}
+
+/* Animation for status changes */
+.status-change {
+    animation: statusPulse 0.5s ease-in-out;
+}
+
+@keyframes statusPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Loading states */
+.evolution-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.evolution-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #25D366;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
