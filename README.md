@@ -590,13 +590,4 @@ php bin/console test plugins/MauticEvolutionBundle/Tests/
 
 ---
 
-## 📞 Suporte
-
-- **Documentação**: [Wiki do Projeto](https://github.com/mautic/MauticEvolutionBundle/wiki)
-- **Issues**: [GitHub Issues](https://github.com/mautic/MauticEvolutionBundle/issues)
-- **Discussões**: [GitHub Discussions](https://github.com/mautic/MauticEvolutionBundle/discussions)
-- **E-mail**: support@mautic.org
-
----
-
 **Desenvolvido com ❤️ pela equipe Soluções Digitais
