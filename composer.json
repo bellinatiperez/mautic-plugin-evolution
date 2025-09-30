@@ -15,8 +15,7 @@
             "name": "Evolution API Integration",
             "description": "Integração com Evolution API para envio de mensagens WhatsApp",
             "version": "1.0.0",
-            "author": "Equipe Soluções Digitais",
-            "install-directory-name": "MauticEvolutionBundle"
+            "author": "Equipe Soluções Digitais"
         }
     },
     "autoload": {
