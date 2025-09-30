@@ -1,5 +1,6 @@
 {
-    "name": "bellinatiperez/evolution-bundle",
+    "name": "bellinatiperez/mautic-plugin-evolution",
+    "version": "1.0.0",
     "description": "Evolution API Integration",
     "type": "mautic-plugin",
     "license": "GPL-3.0-or-later",
