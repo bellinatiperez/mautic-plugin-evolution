@@ -6,8 +6,6 @@ namespace MauticPlugin\MauticEvolutionBundle\Controller;
 
 use MauticPlugin\MauticEvolutionBundle\Service\EvolutionApiService;
 use Mautic\CoreBundle\Controller\FormController;
-use Mautic\CoreBundle\Factory\PageHelperFactoryInterface;
-use Mautic\CoreBundle\Helper\CoreParametersHelper;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -76,27 +74,6 @@ class ConfigController extends FormController
             return new JsonResponse([
                 'success' => false,
                 'message' => 'Erro ao testar conexão: ' . $e->getMessage(),
-            ]);
-        }
-    }
-
-    /**
-     * Obtém informações da instância
-     */
-    public function instanceInfoAction(): JsonResponse
-    {
-        try {
-            $info = $this->evolutionApiService->getInstanceInfo();
-            
-            return new JsonResponse([
-                'success' => true,
-                'data' => $info,
-            ]);
-
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'success' => false,
-                'message' => 'Erro ao obter informações da instância: ' . $e->getMessage(),
             ]);
         }
     }

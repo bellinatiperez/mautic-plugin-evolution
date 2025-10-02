@@ -159,6 +159,11 @@ class EvolutionApiService
         $apiKey = $this->getApiKey();
 
         if (empty($apiUrl) || empty($apiKey)) {
+            $this->logger->error('Evolution API não configurada corretamente', [
+                'api_url' => $apiUrl,
+                'api_key' => $apiKey,
+            ]);
+
             $errorMessage = 'Evolution API não configurada corretamente';
             
             // Registra falha no evento de campanha se disponível
@@ -336,11 +341,10 @@ class EvolutionApiService
         
         // Mapeia as chaves descriptografadas para nomes corretos
         $mappedApiKeys = [];
-        if (is_array($apiKeys) && count($apiKeys) >= 3) {
+        if (is_array($apiKeys) && count($apiKeys) >= 2) {
             $mappedApiKeys = [
                 'evolution_api_url' => $apiKeys[0] ?? '',
                 'evolution_api_key' => $apiKeys[1] ?? '',
-                'evolution_instance' => $apiKeys[2] ?? '',
             ];
         }
         
@@ -390,7 +394,9 @@ class EvolutionApiService
     private function getInstance(): string
     {
         $settings = $this->getIntegrationSettings();
-        $instance = $settings['evolution_instance'] ?? '';
+        
+        // Usa uma instância padrão ou configurada via feature settings
+        $instance = $settings['evolution_instance'] ?? 'default';
         
         // Debug: Log para verificar se a instância está sendo carregada
         $this->logger->info('Evolution API - getInstance Debug', [
@@ -416,8 +422,7 @@ class EvolutionApiService
     public function isConfigured(): bool
     {
         return !empty($this->getApiUrl()) && 
-               !empty($this->getApiKey()) && 
-               !empty($this->getInstance());
+               !empty($this->getApiKey());
     }
 
     /**
