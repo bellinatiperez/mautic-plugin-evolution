@@ -16,13 +16,13 @@ class JsonArrayTransformer implements DataTransformerInterface
      *
      * @return string
      */
-    public function transform($array)
+    public function transform(mixed $value): mixed
     {
-        if (null === $array || empty($array)) {
+        if ($value === null || (is_array($value) && empty($value))) {
             return '';
         }
 
-        return json_encode($array, JSON_PRETTY_PRINT);
+        return json_encode($value, JSON_PRETTY_PRINT);
     }
 
     /**
@@ -32,15 +32,15 @@ class JsonArrayTransformer implements DataTransformerInterface
      *
      * @return array|null
      */
-    public function reverseTransform($string)
+    public function reverseTransform(mixed $value): mixed
     {
-        if (!$string || trim($string) === '') {
+        if (!$value || (is_string($value) && trim($value) === '')) {
             return null;
         }
 
-        $decoded = json_decode($string, true);
+        $decoded = is_string($value) ? json_decode($value, true) : $value;
         
-        if (json_last_error() !== JSON_ERROR_NONE) {
+        if (is_string($value) && json_last_error() !== JSON_ERROR_NONE) {
             // If JSON is invalid, return null to let validation handle it
             return null;
         }

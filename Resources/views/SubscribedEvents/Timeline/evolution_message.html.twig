@@ -1,0 +1,52 @@
+<div class="evolution-timeline-entry">
+  {% set extra = event.extra is defined ? event.extra : {} %}
+
+  <div class="small text-muted">Evolution details loaded • {{ event.event }} • {{ event.eventId }}</div>
+
+  <div><strong>Status:</strong> {{ attribute(extra, 'status')|default('desconhecido') }}</div>
+  <div><strong>Data/hora:</strong> {{ event.timestamp|date('d/m/Y H:i:s') }}</div>
+
+  {% set hasPhone = extra is iterable and 'phone' in extra %}
+  {% set hasReqNumber = extra is iterable and 'request' in extra and extra.request is iterable and 'number' in extra.request %}
+  {% set phone = hasPhone ? attribute(extra, 'phone') : (hasReqNumber ? attribute(extra.request, 'number') : null) %}
+  {% if phone %}
+    <div><strong>Telefone:</strong> {{ phone }}</div>
+  {% endif %}
+
+  {% if extra is iterable and 'template' in extra and attribute(extra, 'template') %}
+    <div><strong>Template:</strong> {{ attribute(extra, 'template') }}</div>
+  {% endif %}
+
+  {% if extra is iterable and 'messageId' in extra and attribute(extra, 'messageId') %}
+    <div><strong>ID da mensagem:</strong> {{ attribute(extra, 'messageId') }}</div>
+  {% endif %}
+
+  {% if extra is iterable and 'action' in extra and attribute(extra, 'action') %}
+    <div><strong>Ação:</strong> {{ attribute(extra, 'action') }}</div>
+  {% endif %}
+
+  {% if extra is iterable and 'error' in extra and attribute(extra, 'error') %}
+    <div class="text-danger"><strong>Erro:</strong> {{ attribute(extra, 'error') }}</div>
+  {% endif %}
+
+  {% if extra is iterable and 'request' in extra and extra.request is iterable and 'text' in extra.request %}
+    <details>
+      <summary>Conteúdo enviado</summary>
+      <pre>{{ attribute(extra.request, 'text') }}</pre>
+    </details>
+  {% endif %}
+
+  {% if extra is iterable and 'response' in extra and attribute(extra, 'response') %}
+    <details>
+      <summary>Resposta da API</summary>
+      <pre>{{ attribute(extra, 'response')|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    </details>
+  {% endif %}
+
+  {% if extra is iterable and extra|length > 0 %}
+    <details>
+      <summary>Dados brutos do evento</summary>
+      <pre>{{ extra|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+    </details>
+  {% endif %}
+</div>

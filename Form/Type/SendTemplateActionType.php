@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MauticPlugin\MauticEvolutionBundle\Form\Type;
 
 use MauticPlugin\MauticEvolutionBundle\Model\TemplateModel;
+use MauticPlugin\MauticEvolutionBundle\Service\EvolutionApiService;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -19,7 +20,8 @@ use Symfony\Component\Validator\Constraints as Assert;
 class SendTemplateActionType extends AbstractType
 {
     public function __construct(
-        private TemplateModel $templateModel
+        private TemplateModel $templateModel,
+        private EvolutionApiService $evolutionApiService
     ) {
     }
 
@@ -28,7 +30,38 @@ class SendTemplateActionType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        // Carrega grupos habilitados da Evolution API
+        $groupsResult = $this->evolutionApiService->getInstanceGroups();
+        $groupsError = !$groupsResult['success'];
+        $groupChoices = [];
+
+        if ($groupsResult['success'] && !empty($groupsResult['groups'])) {
+            foreach ($groupsResult['groups'] as $group) {
+                if (!empty($group['name']) && !empty($group['alias'])) {
+                    $groupChoices[$group['name']] = $group['alias'];
+                }
+            }
+        }
+
         $builder
+            ->add('group_alias', ChoiceType::class, [
+                'label' => 'mautic.evolution.campaign.action.group.label',
+                'label_attr' => ['class' => 'control-label required'],
+                'attr' => [
+                    'class' => 'form-control',
+                    'tooltip' => 'mautic.evolution.campaign.action.group.tooltip',
+                    'data-groups-error' => $groupsError ? '1' : '0',
+                ],
+                'placeholder' => 'mautic.evolution.campaign.action.group.placeholder',
+                'choices' => $groupChoices,
+                'required' => true,
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'mautic.evolution.campaign.action.group.notblank',
+                    ]),
+                ],
+                'help' => 'mautic.evolution.campaign.action.group.help',
+            ])
             ->add('template', ChoiceType::class, [
                 'label' => 'mautic.evolution.campaign.action.template.select',
                 'label_attr' => ['class' => 'control-label required'],

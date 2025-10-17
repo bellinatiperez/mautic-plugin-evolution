@@ -53,22 +53,17 @@ return [
 
     'services' => [
         'models' => [
-            'evolution.template' => [
+            'mautic.evolution.model.template' => [
                 'class' => 'MauticPlugin\MauticEvolutionBundle\Model\TemplateModel',
                 'arguments' => [
-                    'mautic.lead.model.field',
-                    'mautic.form.model.form',
-                    'mautic.helper.theme',
-                    'twig',
-                    'event_dispatcher',
-                    'mautic.security',
-                    'mautic.helper.user',
                     'doctrine.orm.entity_manager',
-                    'mautic.helper.core_parameters',
+                    'mautic.security',
                     'event_dispatcher',
+                    'router',
                     'translator',
                     'mautic.helper.user',
                     'monolog.logger.mautic',
+                    'mautic.helper.core_parameters',
                 ],
             ],
         ],
@@ -76,7 +71,7 @@ return [
             'mautic.evolution.helper.template' => [
                 'class' => 'MauticPlugin\MauticEvolutionBundle\Helper\TemplateHelper',
                 'arguments' => [
-                    'evolution.template',
+                    'mautic.evolution.model.template',
                     'twig',
                 ],
             ],

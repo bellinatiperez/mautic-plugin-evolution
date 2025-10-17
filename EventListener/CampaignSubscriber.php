@@ -94,15 +94,21 @@ class CampaignSubscriber implements EventSubscriberInterface
             // Obtém configurações da action
             $message = $config['message'] ?? '';
             $phoneField = $config['phone_field'] ?? 'mobile';
+            $groupAlias = $config['group_alias'] ?? null;
 
             if (empty($message)) {
                 $event->setResult(false);
                 $event->setFailed('Mensagem não configurada');
                 return;
             }
+            if (empty($groupAlias)) {
+                $event->setResult(false);
+                $event->setFailed('Seleção de grupo não configurada');
+                return;
+            }
 
-            // Envia mensagem
-            $result = $this->messageModel->sendMessage($lead, $message);
+            // Envia mensagem com suporte a group alias e phone field
+            $result = $this->messageModel->sendMessage($lead, $message, null, $groupAlias, $phoneField);
 
             if ($result) {
                 $event->setResult(true);
@@ -130,10 +136,17 @@ class CampaignSubscriber implements EventSubscriberInterface
             // Obtém configurações da action
             $templateId = $config['template'] ?? null;
             $phoneField = $config['phone_field'] ?? 'mobile';
+            $groupAlias = $config['group_alias'] ?? null;
 
             if (empty($templateId)) {
                 $event->setResult(false);
                 $event->setFailed('Template não selecionado');
+                return;
+            }
+
+            if (empty($groupAlias)) {
+                $event->setResult(false);
+                $event->setFailed('Seleção de grupo não configurada');
                 return;
             }
 
@@ -149,8 +162,8 @@ class CampaignSubscriber implements EventSubscriberInterface
             // Obter conteúdo do template
             $templateContent = $template->getContent();
 
-            // Enviar mensagem usando o template
-            $result = $this->messageModel->sendMessage($lead, $templateContent, $template->getName());
+            // Enviar mensagem usando o template, com suporte a group alias e phone field
+            $result = $this->messageModel->sendMessage($lead, $templateContent, $template->getName(), $groupAlias, $phoneField);
 
             if ($result) {
                 $event->setResult(true);

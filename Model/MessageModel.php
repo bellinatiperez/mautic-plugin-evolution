@@ -58,9 +58,9 @@ class MessageModel extends FormModel
     /**
      * Send message via Evolution API
      */
-    public function sendMessage(Lead $lead, string $message, ?string $templateName = null): ?EvolutionMessage
+    public function sendMessage(Lead $lead, string $message, ?string $templateName = null, ?string $groupAlias = null, string $phoneField = 'mobile'): ?EvolutionMessage
     {
-        $phoneNumber = $lead->getLeadPhoneNumber();
+        $phoneNumber = $this->getLeadPhoneNumber($lead, $phoneField);
         
         if (empty($phoneNumber)) {
             $this->logger->warning('Cannot send Evolution message: Lead has no phone number', ['leadId' => $lead->getId()]);
@@ -77,14 +77,6 @@ class MessageModel extends FormModel
             // Then use TokenHelper to replace the tokens
             $interpolatedMessage = TokenHelper::findLeadTokens($message, $leadData, true);
 
-            // Debug log to check interpolation
-            $this->logger->info('Evolution Message Interpolation Debug', [
-                'original_message' => $message,
-                'interpolated_message' => $interpolatedMessage,
-                'lead_data' => $leadData,
-                'lead_id' => $lead->getId(),
-            ]);
-
             // Create message entity
             $evolutionMessage = new EvolutionMessage();
             $evolutionMessage->setLead($lead);
@@ -92,21 +84,21 @@ class MessageModel extends FormModel
             $evolutionMessage->setMessageContent($interpolatedMessage);
             $evolutionMessage->setTemplateName($templateName);
             $evolutionMessage->setStatus('pending');
-            $evolutionMessage->setSentAt(new \DateTime());
 
-            // Send via API with interpolated message
-            $response = $this->evolutionApiService->sendTextWithBalancing($phoneNumber, $interpolatedMessage);
+            // Send via API
+            $response = !empty($groupAlias)
+                ? $this->evolutionApiService->sendTextWithGroupBalancing($groupAlias, $phoneNumber, $interpolatedMessage, [], $lead)
+                : $this->evolutionApiService->sendTextWithBalancing($phoneNumber, $interpolatedMessage, $lead);
+
             $messageId = $response['data']['key']['id'] ?? null;
-            
-            $this->logger->info('Evolution Send Text Message Response Debug', $response);
 
-            if ($messageId && isset($messageId)) {
-                $evolutionMessage->setSentReceipt($response['data']);
+            if ($messageId) {
                 $evolutionMessage->setMessageId($messageId);
                 $evolutionMessage->setStatus('sent');
+                $evolutionMessage->setSentAt(new \DateTime());
             } else {
                 $evolutionMessage->setStatus('failed');
-                $evolutionMessage->setErrorMessage('Failed to send message via Evolution API');
+                $evolutionMessage->setErrorMessage($response['error'] ?? 'Failed to send message via Evolution API');
             }
 
             $this->saveEntity($evolutionMessage);
@@ -179,5 +171,26 @@ class MessageModel extends FormModel
     public function getMessageStats(): array
     {
         return $this->getRepository()->getMessageStats();
+    }
+
+    /**
+     * Get the contact's phone number honoring selected field
+     */
+    private function getLeadPhoneNumber(Lead $lead, string $phoneField = 'mobile'): ?string
+    {
+        $fieldsOrder = array_unique(array_filter([$phoneField, 'mobile', 'phone', 'whatsapp']));
+        foreach ($fieldsOrder as $field) {
+            $phone = method_exists($lead, 'getFieldValue') ? $lead->getFieldValue($field) : null;
+            if (!empty($phone)) {
+                $clean = preg_replace('/[^0-9]/', '', (string) $phone);
+                if (strlen($clean) >= 10 && substr($clean, 0, 2) !== '55') {
+                    $clean = '55' . $clean;
+                }
+                return $clean;
+            }
+        }
+        // fallback to lead helper
+        $fallback = $lead->getLeadPhoneNumber();
+        return $fallback ? preg_replace('/[^0-9]/', '', $fallback) : null;
     }
 }

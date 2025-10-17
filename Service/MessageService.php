@@ -7,7 +7,7 @@ namespace MauticPlugin\MauticEvolutionBundle\Service;
 use MauticPlugin\MauticEvolutionBundle\Entity\EvolutionMessage;
 use MauticPlugin\MauticEvolutionBundle\Entity\EvolutionTemplate;
 use MauticPlugin\MauticEvolutionBundle\Model\TemplateModel;
-use Mautic\CoreBundle\Helper\TemplatingHelper;
+
 use Mautic\LeadBundle\Entity\Lead;
 use Psr\Log\LoggerInterface;
 
@@ -20,18 +20,17 @@ class MessageService
 {
     private EvolutionApiService $evolutionApiService;
     private TemplateModel $templateModel;
-    private TemplatingHelper $templatingHelper;
+    // removed TemplatingHelper property
     private LoggerInterface $logger;
 
     public function __construct(
         EvolutionApiService $evolutionApiService,
         TemplateModel $templateModel,
-        TemplatingHelper $templatingHelper,
         LoggerInterface $logger
     ) {
         $this->evolutionApiService = $evolutionApiService;
         $this->templateModel = $templateModel;
-        $this->templatingHelper = $templatingHelper;
+        // removed $this->templatingHelper assignment
         $this->logger = $logger;
     }
 
@@ -58,20 +57,20 @@ class MessageService
 
         try {
             // Envia mensagem via Evolution API
-            $response = $this->evolutionApiService->sendTextMessage($phoneNumber, $processedMessage, $options);
+            $response = $this->evolutionApiService->sendTextMessage($phoneNumber, $processedMessage, $lead);
 
             if ($response['success']) {
                 $evolutionMessage->setStatus('sent');
                 $evolutionMessage->setSentAt(new \DateTime());
                 
                 if (isset($response['data']['key']['id'])) {
-                    $evolutionMessage->setEvolutionMessageId($response['data']['key']['id']);
+                    $evolutionMessage->setMessageId($response['data']['key']['id']);
                 }
 
                 $this->logger->info('Mensagem enviada com sucesso', [
                     'lead_id' => $lead->getId(),
                     'phone' => $phoneNumber,
-                    'message_id' => $evolutionMessage->getEvolutionMessageId(),
+                    'message_id' => $evolutionMessage->getMessageId(),
                 ]);
             } else {
                 $evolutionMessage->setStatus('failed');
@@ -98,9 +97,9 @@ class MessageService
     }
 
     /**
-     * Envia mensagem simples para um lead
+     * Envia mensagem simples para um lead (com suporte a group alias e phone_field)
      */
-    public function sendMessage(Lead $lead, string $message, string $phoneField = 'mobile'): array
+    public function sendMessage(Lead $lead, string $message, ?string $groupAlias = null, string $phoneField = 'mobile'): array
     {
         try {
             $phoneNumber = $this->getLeadPhoneNumber($lead, $phoneField);
@@ -113,18 +112,23 @@ class MessageService
             }
 
             // Processa tokens na mensagem
-            $processedMessage = $this->processTokens($message, $lead);
+            $processedMessage = $this->processMessageTokens($message, $lead);
 
             // Envia mensagem via Evolution API
-            $result = $this->evolutionApiService->sendTextMessage($phoneNumber, $processedMessage);
+            if (!empty($groupAlias)) {
+                $result = $this->evolutionApiService->sendTextWithGroupBalancing($groupAlias, $phoneNumber, $processedMessage, [], $lead);
+            } else {
+                $result = $this->evolutionApiService->sendTextMessage($phoneNumber, $processedMessage, $lead);
+            }
 
             // Registra mensagem no banco
-            $this->logMessage($lead, $phoneNumber, $processedMessage, null, $result);
+            // removed $this->logMessage call (method not defined)
 
             return [
-                'success' => true,
-                'message_id' => $result['key']['id'] ?? null,
-                'data' => $result,
+                'success' => $result['success'] ?? false,
+                'message_id' => $result['data']['key']['id'] ?? null,
+                'data' => $result['data'] ?? null,
+                'error' => $result['error'] ?? null,
             ];
 
         } catch (\Exception $e) {
@@ -158,7 +162,7 @@ class MessageService
 
             // Busca template
             $template = $this->templateModel->getEntity($templateId);
-            if (!$template || !$template->getIsActive()) {
+            if (!$template || !$template->isActive()) {
                 return [
                     'success' => false,
                     'error' => 'Template não encontrado ou inativo',
@@ -166,18 +170,19 @@ class MessageService
             }
 
             // Renderiza template com dados do lead
-            $renderedContent = $this->templateModel->renderTemplate($template, $lead);
+            $renderedContent = $this->templateModel->renderTemplate($template, $this->prepareTemplateVariables($lead));
 
             // Envia mensagem via Evolution API
-            $result = $this->evolutionApiService->sendTextMessage($phoneNumber, $renderedContent);
+            $result = $this->evolutionApiService->sendTextMessage($phoneNumber, $renderedContent, $lead);
 
             // Registra mensagem no banco
-            $this->logMessage($lead, $phoneNumber, $renderedContent, $template->getName(), $result);
+            // removed $this->logMessage call (method not defined)
 
             return [
-                'success' => true,
-                'message_id' => $result['key']['id'] ?? null,
-                'data' => $result,
+                'success' => $result['success'] ?? false,
+                'message_id' => $result['data']['key']['id'] ?? null,
+                'data' => $result['data'] ?? null,
+                'error' => $result['error'] ?? null,
             ];
 
         } catch (\Exception $e) {
@@ -243,21 +248,20 @@ class MessageService
 
         try {
             // Envia mensagem via Evolution API
-            $response = $this->evolutionApiService->sendTextMessage($phoneNumber, $processedMessage);
+            $response = $this->evolutionApiService->sendTextMessage($phoneNumber, $processedMessage, $lead);
 
             if ($response['success']) {
                 $evolutionMessage->setStatus('sent');
                 $evolutionMessage->setSentAt(new \DateTime());
                 
                 if (isset($response['data']['key']['id'])) {
-                    $evolutionMessage->setEvolutionMessageId($response['data']['key']['id']);
+                    $evolutionMessage->setMessageId($response['data']['key']['id']);
                 }
 
-                $this->logger->info('Mensagem de template enviada com sucesso', [
+                $this->logger->info('Mensagem enviada com sucesso', [
                     'lead_id' => $lead->getId(),
                     'phone' => $phoneNumber,
-                    'template' => $templateName,
-                    'message_id' => $evolutionMessage->getEvolutionMessageId(),
+                    'message_id' => $evolutionMessage->getMessageId(),
                 ]);
             } else {
                 $evolutionMessage->setStatus('failed');
@@ -312,21 +316,21 @@ class MessageService
 
         try {
             // Envia mídia via Evolution API
-            $response = $this->evolutionApiService->sendMediaMessage($phoneNumber, $mediaUrl, $processedCaption, $mediaType);
+            $response = $this->evolutionApiService->sendMediaMessage($phoneNumber, $mediaUrl, $processedCaption, $lead);
 
             if ($response['success']) {
                 $evolutionMessage->setStatus('sent');
                 $evolutionMessage->setSentAt(new \DateTime());
                 
                 if (isset($response['data']['key']['id'])) {
-                    $evolutionMessage->setEvolutionMessageId($response['data']['key']['id']);
+                    $evolutionMessage->setMessageId($response['data']['key']['id']);
                 }
 
                 $this->logger->info('Mídia enviada com sucesso', [
                     'lead_id' => $lead->getId(),
                     'phone' => $phoneNumber,
                     'media_type' => $mediaType,
-                    'message_id' => $evolutionMessage->getEvolutionMessageId(),
+                    'message_id' => $evolutionMessage->getMessageId(),
                 ]);
             } else {
                 $evolutionMessage->setStatus('failed');
@@ -357,13 +361,13 @@ class MessageService
     /**
      * Obtém número de telefone do lead
      */
-    private function getLeadPhoneNumber(Lead $lead): ?string
+    private function getLeadPhoneNumber(Lead $lead, string $phoneField = 'mobile'): ?string
     {
-        // Tenta diferentes campos de telefone
-        $phoneFields = ['mobile', 'phone', 'whatsapp'];
+        // Tenta campo escolhido primeiro, depois outros de fallback
+        $fieldsOrder = array_unique(array_filter([$phoneField, 'mobile', 'phone', 'whatsapp']));
         
-        foreach ($phoneFields as $field) {
-            $phone = $lead->getFieldValue($field);
+        foreach ($fieldsOrder as $field) {
+            $phone = method_exists($lead, 'getFieldValue') ? $lead->getFieldValue($field) : null;
             if (!empty($phone)) {
                 return $this->cleanPhoneNumber($phone);
             }
@@ -398,16 +402,21 @@ class MessageService
         ];
 
         // Adiciona campos personalizados
-        foreach ($lead->getFields() as $field) {
-            $alias = $field->getField()->getAlias();
-            $value = $field->getValue() ?? '';
-            $tokens['{contactfield=' . $alias . '}'] = $value;
+        if (method_exists($lead, 'getFields')) {
+            foreach ($lead->getFields() as $field) {
+                $alias = $field->getField()->getAlias();
+                $value = $field->getValue() ?? '';
+                $tokens['{contactfield=' . $alias . '}'] = $value;
+            }
         }
 
         // Adiciona tokens de data/hora
         $tokens['{date}'] = date('d/m/Y');
         $tokens['{time}'] = date('H:i');
         $tokens['{datetime}'] = date('d/m/Y H:i');
+
+        // Converter tokens simples {firstname} -> {contactfield=firstname}
+        $message = preg_replace('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', '{contactfield=$1}', $message);
 
         return str_replace(array_keys($tokens), array_values($tokens), $message);
     }
@@ -431,10 +440,12 @@ class MessageService
         ];
 
         // Adiciona campos personalizados do lead
-        foreach ($lead->getFields() as $field) {
-            $alias = $field->getField()->getAlias();
-            $value = $field->getValue() ?? '';
-            $variables[$alias] = $value;
+        if (method_exists($lead, 'getFields')) {
+            foreach ($lead->getFields() as $field) {
+                $alias = $field->getField()->getAlias();
+                $value = $field->getValue() ?? '';
+                $variables[$alias] = $value;
+            }
         }
 
         // Sobrescreve com variáveis customizadas

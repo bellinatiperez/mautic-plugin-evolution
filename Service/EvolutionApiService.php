@@ -72,6 +72,71 @@ class EvolutionApiService
     }
 
     /**
+     * Envia texto utilizando balanceamento por grupo (usa alias do grupo)
+     */
+    public function sendTextWithGroupBalancing(string $alias, string $number, string $text, array $options = [], Lead $contact = null, CampaignExecutionEvent $event = null): array
+    {
+        $data = [
+            'alias' => $alias,
+            'number' => $number,
+            'text' => $text,
+        ];
+
+        // Campos opcionais do payload
+        if (isset($options['delay'])) {
+            $data['delay'] = (int) $options['delay'];
+        }
+        if (isset($options['mentionsEveryOne'])) {
+            $data['mentionsEveryOne'] = (bool) $options['mentionsEveryOne'];
+        }
+        if (isset($options['mentioned']) && is_array($options['mentioned'])) {
+            $data['mentioned'] = $options['mentioned'];
+        }
+
+        return $this->makeRequest('POST', '/message/sendTextWithGroupBalancing', $data, $contact, $event);
+    }
+
+    /**
+     * Obtém lista de grupos da Evolution API e filtra apenas habilitados
+     * @return array{success: bool, groups: array<int, array{ id: string, name: string, alias: string, enabled: bool }>, error?: string}
+     */
+    public function getInstanceGroups(): array
+    {
+        $result = $this->makeRequest('GET', '/instance-group');
+
+        if (!$result['success']) {
+            return [
+                'success' => false,
+                'groups' => [],
+                'error' => $result['error'] ?? 'Falha ao obter grupos da Evolution API',
+            ];
+        }
+
+        $groups = [];
+        foreach (($result['data'] ?? []) as $item) {
+            if (!isset($item['enabled']) || $item['enabled'] !== true) {
+                continue;
+            }
+            $groups[] = [
+                'id' => (string) ($item['id'] ?? ''),
+                'name' => (string) ($item['name'] ?? ''),
+                'alias' => (string) ($item['alias'] ?? ''),
+                'enabled' => (bool) ($item['enabled'] ?? false),
+            ];
+        }
+
+        // Log para depuração
+        $this->logger->info('Evolution API - getInstanceGroups', [
+            'count' => count($groups),
+        ]);
+
+        return [
+            'success' => true,
+            'groups' => $groups,
+        ];
+    }
+
+    /**
      * Envia mensagem de mídia via Evolution API
      */
     public function sendMediaMessage(string $number, string $mediaUrl, string $caption = '', Lead $contact = null, CampaignExecutionEvent $event = null): array
@@ -209,12 +274,31 @@ class EvolutionApiService
 
             // Verifica se o status da resposta é 2xx (sucesso)
             if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-                // Sucesso: Retorna os dados da resposta
-                return [
+                $result = [
                     'success' => true,
                     'status_code' => $response->getStatusCode(),
                     'data' => $responseData,
                 ];
+
+                // Log de sucesso no timeline do contato quando aplicável
+                if ($contact instanceof Lead) {
+                    $action = $this->getActionFromEndpoint($endpoint);
+                    if (in_array($action, ['Send Text Message', 'Send Media Message', 'Send Text With Group Balancing'])) {
+                        $details = [
+                            'action' => $action,
+                            'status' => 'sent',
+                            'timestamp' => new \DateTime(),
+                            'request' => $data,
+                            'response' => $responseData,
+                            'messageId' => $responseData['key']['id'] ?? ($responseData['data']['key']['id'] ?? null),
+                            'phone' => $data['number'] ?? ($data['phoneNumber'] ?? null),
+                            'template' => $data['template'] ?? ($data['mediaMessage']['caption'] ?? null),
+                        ];
+                        $this->logSuccessEvent($contact, $action, $details);
+                    }
+                }
+
+                return $result;
             } 
 
             // Exceção personalizada para erro HTTP (status 4xx ou 5xx)
@@ -290,6 +374,8 @@ class EvolutionApiService
             return 'Mark as Read';
         } elseif (strpos($endpoint, '/chat/whatsappNumbers/') !== false) {
             return 'Check WhatsApp Number';
+        } elseif (strpos($endpoint, '/message/sendTextWithGroupBalancing') !== false) {
+            return 'Send Text With Group Balancing';
         } else {
             return 'API Request';
         }
@@ -489,6 +575,46 @@ class EvolutionApiService
             ]);
         } catch (\Exception $e) {
             $this->logger->error('Failed to log Evolution API failure event', [
+                'contact_id' => $contact->getId(),
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Registra evento de sucesso no timeline do contato
+     */
+    private function logSuccessEvent(Lead $contact, string $action, array $details = []): void
+    {
+        try {
+            $user = $this->userHelper->getUser();
+
+            $eventLog = new LeadEventLog();
+            $eventLog->setLead($contact);
+            $eventLog->setBundle('EvolutionBundle');
+            $eventLog->setObject('evolution_api');
+            $eventLog->setObjectId($contact->getId());
+            $eventLog->setAction('evolution_api_success');
+            // Garantir propriedades com carimbo de data/hora
+            $props = array_merge([
+                'timestamp' => new \DateTime(),
+            ], $details);
+            $props['action'] = $action;
+            $eventLog->setProperties($props);
+            $eventLog->setUserId($user ? $user->getId() : null);
+            $eventLog->setUserName($user ? $user->getName() : 'System');
+            $eventLog->setDateAdded(new \DateTime());
+
+            $this->entityManager->persist($eventLog);
+            $this->entityManager->flush();
+
+            $this->logger->info('Evolution API success event logged for contact', [
+                'contact_id' => $contact->getId(),
+                'action' => $action,
+                'message_id' => $props['messageId'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            $this->logger->error('Failed to log Evolution API success event', [
                 'contact_id' => $contact->getId(),
                 'error' => $e->getMessage(),
             ]);

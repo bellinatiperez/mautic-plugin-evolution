@@ -5,37 +5,47 @@ declare(strict_types=1);
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
 
-return static function (ContainerConfigurator $configurator): void {
+return function (ContainerConfigurator $configurator): void {
     $services = $configurator->services()
         ->defaults()
         ->autowire()
         ->autoconfigure()
         ->public();
 
-    // Evolution API Service
-    $services->set('mautic.evolution.service.evolution_api', \MauticPlugin\MauticEvolutionBundle\Service\EvolutionApiService::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Service\EvolutionApiService::class)
+    // Auto-load bundle classes, but exclude Models to define them explicitly with correct arguments
+    $services->load('MauticPlugin\\MauticEvolutionBundle\\', '../')
+        ->exclude('../{Config,Resources,Model,composer.json,MauticEvolutionBundle.php,README.md}');
+
+    // Evolution API service
+    $services->set(MauticPlugin\MauticEvolutionBundle\Service\EvolutionApiService::class)
+        ->public()
         ->args([
             service('mautic.helper.integration'),
             service('mautic.http.client'),
             service('monolog.logger.mautic'),
             service('mautic.helper.user'),
-            service('doctrine.orm.entity_manager')
+            service('doctrine.orm.entity_manager'),
         ]);
+    $services->alias('mautic.evolution.service.evolution_api', MauticPlugin\MauticEvolutionBundle\Service\EvolutionApiService::class);
 
-    // Webhook Service
-    $services->set('mautic.evolution.service.webhook', \MauticPlugin\MauticEvolutionBundle\Service\WebhookService::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Service\WebhookService::class)
+    // TemplateModel with explicit core dependencies
+    $services->set(MauticPlugin\MauticEvolutionBundle\Model\TemplateModel::class)
+        ->public()
         ->args([
-            service('mautic.lead.model.lead'),
-            service('mautic.lead.model.note'),
+            service('doctrine.orm.entity_manager'),
+            service('mautic.security'),
             service('event_dispatcher'),
-            service('monolog.logger.mautic')
+            service('router'),
+            service('translator'),
+            service('mautic.helper.user'),
+            service('monolog.logger.mautic'),
+            service('mautic.helper.core_parameters'),
         ]);
+    $services->alias('mautic.evolution.model.template', MauticPlugin\MauticEvolutionBundle\Model\TemplateModel::class);
 
-    // Message Model
-    $services->set('mautic.evolution.model.message', \MauticPlugin\MauticEvolutionBundle\Model\MessageModel::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Model\MessageModel::class)
+    // MessageModel requires LeadModel and EvolutionApiService before core dependencies
+    $services->set(MauticPlugin\MauticEvolutionBundle\Model\MessageModel::class)
+        ->public()
         ->args([
             service('mautic.lead.model.lead'),
             service('mautic.evolution.service.evolution_api'),
@@ -46,94 +56,23 @@ return static function (ContainerConfigurator $configurator): void {
             service('translator'),
             service('mautic.helper.user'),
             service('monolog.logger.mautic'),
-            service('mautic.helper.core_parameters')
-        ]);
-
-    // Template Model
-    $services->set('mautic.evolution.model.template', \MauticPlugin\MauticEvolutionBundle\Model\TemplateModel::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Model\TemplateModel::class)
-        ->args([
-            service('doctrine.orm.entity_manager'),
-            service('mautic.security'),
-            service('event_dispatcher'),
-            service('router'),
-            service('translator'),
-            service('mautic.helper.user'),
-            service('monolog.logger.mautic'),
-            service('mautic.helper.core_parameters')
-        ]);
-
-    // Controllers
-    $services->set(\MauticPlugin\MauticEvolutionBundle\Controller\WebhookController::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Controller\WebhookController::class)
-        ->args([
-            service('mautic.evolution.service.webhook'),
-            service('monolog.logger.mautic'),
-            service('doctrine'),
-            service('mautic.model.factory'),
-            service('mautic.helper.user'),
             service('mautic.helper.core_parameters'),
-            service('event_dispatcher'),
-            service('translator'),
-            service('mautic.core.service.flashbag'),
-            service('request_stack'),
-            service('mautic.security'),
         ]);
+    $services->alias('mautic.evolution.model.message', MauticPlugin\MauticEvolutionBundle\Model\MessageModel::class);
 
-    $services->set(\MauticPlugin\MauticEvolutionBundle\Controller\TemplateController::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Controller\TemplateController::class)
+    // Form Types: explicitly wire dependencies and tag as form.type
+    $services->set(MauticPlugin\MauticEvolutionBundle\Form\Type\SendTemplateActionType::class)
+        ->public()
         ->args([
-            service('form.factory'),
-            service('mautic.helper.form.field_helper'),
-            service('doctrine'),
-            service('mautic.model.factory'),
-            service('mautic.helper.user'),
-            service('mautic.helper.core_parameters'),
-            service('event_dispatcher'),
-            service('translator'),
-            service('mautic.core.service.flashbag'),
-            service('request_stack'),
-            service('mautic.security')
-        ]);
-
-    // Event Subscribers
-    $services->set(\MauticPlugin\MauticEvolutionBundle\EventListener\CampaignSubscriber::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\EventListener\CampaignSubscriber::class)
-        ->args([
-            service('mautic.evolution.model.message'),
-            service('mautic.evolution.model.template'),
-            service('mautic.evolution.service.evolution_api')
+            service(MauticPlugin\MauticEvolutionBundle\Model\TemplateModel::class),
+            service('mautic.evolution.service.evolution_api'),
         ])
-        ->tag('kernel.event_subscriber');
+        ->tag('form.type');
 
-    $services->set(\MauticPlugin\MauticEvolutionBundle\EventListener\LeadSubscriber::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\EventListener\LeadSubscriber::class)
+    $services->set(MauticPlugin\MauticEvolutionBundle\Form\Type\SendMessageActionType::class)
+        ->public()
         ->args([
             service('mautic.evolution.service.evolution_api'),
-            service('monolog.logger.mautic')
         ])
-        ->tag('kernel.event_subscriber');
-
-
-    // Repository Services - Configuração específica para repositórios Doctrine
-    $services->set(\MauticPlugin\MauticEvolutionBundle\Entity\EvolutionTemplateRepository::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Entity\EvolutionTemplateRepository::class)
-        ->args([service('doctrine')])
-        ->tag('doctrine.repository_service');
-
-    $services->set(\MauticPlugin\MauticEvolutionBundle\Entity\EvolutionMessageRepository::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Entity\EvolutionMessageRepository::class)
-        ->args([service('doctrine')])
-        ->tag('doctrine.repository_service');
-
-    // Form Types
-    $services->set(\MauticPlugin\MauticEvolutionBundle\Form\Type\SendTemplateActionType::class)
-        ->class(\MauticPlugin\MauticEvolutionBundle\Form\Type\SendTemplateActionType::class)
-        ->args([
-            service('mautic.evolution.model.template')
-        ]);
-
-    // Repository Aliases
-    $services->alias('mautic.evolution.repository.template', \MauticPlugin\MauticEvolutionBundle\Entity\EvolutionTemplateRepository::class);
-    $services->alias('mautic.evolution.repository.message', \MauticPlugin\MauticEvolutionBundle\Entity\EvolutionMessageRepository::class);
+        ->tag('form.type');
 };
