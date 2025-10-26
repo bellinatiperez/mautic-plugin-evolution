@@ -11,6 +11,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
+use Mautic\CoreBundle\Form\Type\SortableListType;
 
 /**
  * Class SendMessageActionType
@@ -97,7 +98,29 @@ class SendMessageActionType extends AbstractType
                 ],
                 'data' => 'mobile',
                 'required' => false,
-            ]);
+            ])
+            ->add(
+                'headers',
+                SortableListType::class,
+                [
+                    'label' => 'mautic.evolution.campaign.action.headers',
+                    'required' => false,
+                    'option_required' => false,
+                    'with_labels' => true,
+                    'key_value_pairs' => true,
+                ]
+            )
+            ->add(
+                'data',
+                SortableListType::class,
+                [
+                    'label' => 'mautic.evolution.campaign.action.data',
+                    'required' => false,
+                    'option_required' => false,
+                    'with_labels' => true,
+                    'key_value_pairs' => true,
+                ]
+            );
     }
 
     /**

@@ -44,5 +44,27 @@
                 </small>
             </div>
         </div>
+
+        {# Headers (SortableListType) - usar form_row para acionar sortablelist_row #}
+        <div class="form-group">
+            {{ form_row(form.headers) }}
+            <div class="help-block">
+                <small>
+                    <i class="fa fa-info-circle"></i>
+                    {{ 'mautic.evolution.campaign.action.headers.help'|trans }}
+                </small>
+            </div>
+        </div>
+
+        {# Data (SortableListType) - usar form_row para acionar sortablelist_row #}
+        <div class="form-group">
+            {{ form_row(form.data) }}
+            <div class="help-block">
+                <small>
+                    <i class="fa fa-info-circle"></i>
+                    {{ 'mautic.evolution.campaign.action.data.help'|trans }}
+                </small>
+            </div>
+        </div>
     </div>
 {% endblock %}

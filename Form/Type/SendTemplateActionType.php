@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticEvolutionBundle\Form\Type;
 
+use Mautic\CoreBundle\Form\Type\SortableListType;
 use MauticPlugin\MauticEvolutionBundle\Model\TemplateModel;
 use MauticPlugin\MauticEvolutionBundle\Service\EvolutionApiService;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
+use MauticPlugin\MauticEvolutionBundle\Form\Type\KeyValueType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -90,7 +93,29 @@ class SendTemplateActionType extends AbstractType
                 ],
                 'data' => 'mobile',
                 'required' => false,
-            ]);
+            ])
+                ->add(
+                'headers',
+                SortableListType::class,
+                [
+                    'label' => 'mautic.evolution.campaign.action.headers',
+                    'required' => false,
+                    'option_required' => false,
+                    'with_labels' => true,
+                    'key_value_pairs' => true,
+                ]
+            )
+            ->add(
+                'data',
+                SortableListType::class,
+                [
+                    'label' => 'mautic.evolution.campaign.action.data',
+                    'required' => false,
+                    'option_required' => false,
+                    'with_labels' => true,
+                    'key_value_pairs' => true,
+                ]
+            );
     }
 
     /**

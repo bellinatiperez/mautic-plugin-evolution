@@ -28,11 +28,11 @@
             <div class="help-block">
                 <small>
                     <i class="fa fa-info-circle"></i>
-                    Você pode usar tokens como {firstname}, {lastname}, {email}, etc.
+                    {{ 'mautic.evolution.campaign.action.message.content.help'|trans }}
                 </small>
             </div>
         </div>
-        
+
         <div class="form-group">
             {{ form_label(form.phone_field) }}
             {{ form_widget(form.phone_field, {'attr': {'class': 'form-control'}}) }}
@@ -40,7 +40,29 @@
             <div class="help-block">
                 <small>
                     <i class="fa fa-info-circle"></i>
-                    Selecione qual campo do lead será usado para obter o número do WhatsApp.
+                    {{ 'mautic.evolution.campaign.action.phone_field.tooltip'|trans }}
+                </small>
+            </div>
+        </div>
+
+        {# Headers (SortableListType) #}
+        <div class="form-group">
+            {{ form_row(form.headers) }}
+            <div class="help-block">
+                <small>
+                    <i class="fa fa-info-circle"></i>
+                    {{ 'mautic.evolution.campaign.action.headers.help'|trans }}
+                </small>
+            </div>
+        </div>
+
+        {# Data (SortableListType) #}
+        <div class="form-group">
+            {{ form_row(form.data) }}
+            <div class="help-block">
+                <small>
+                    <i class="fa fa-info-circle"></i>
+                    {{ 'mautic.evolution.campaign.action.data.help'|trans }}
                 </small>
             </div>
         </div>

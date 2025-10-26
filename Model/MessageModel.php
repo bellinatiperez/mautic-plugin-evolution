@@ -58,7 +58,7 @@ class MessageModel extends FormModel
     /**
      * Send message via Evolution API
      */
-    public function sendMessage(Lead $lead, string $message, ?string $templateName = null, ?string $groupAlias = null, string $phoneField = 'mobile'): ?EvolutionMessage
+    public function sendMessage(Lead $lead, string $message, ?string $templateName = null, ?string $groupAlias = null, string $phoneField = 'mobile', array $headers = [], array $metadata = []): ?EvolutionMessage
     {
         $phoneNumber = $this->getLeadPhoneNumber($lead, $phoneField);
         
@@ -84,11 +84,14 @@ class MessageModel extends FormModel
             $evolutionMessage->setMessageContent($interpolatedMessage);
             $evolutionMessage->setTemplateName($templateName);
             $evolutionMessage->setStatus('pending');
+            if (!empty($metadata)) {
+                $evolutionMessage->setMetadata($metadata);
+            }
 
             // Send via API
             $response = !empty($groupAlias)
-                ? $this->evolutionApiService->sendTextWithGroupBalancing($groupAlias, $phoneNumber, $interpolatedMessage, [], $lead)
-                : $this->evolutionApiService->sendTextWithBalancing($phoneNumber, $interpolatedMessage, $lead);
+                ? $this->evolutionApiService->sendTextWithGroupBalancing($groupAlias, $phoneNumber, $interpolatedMessage, [], $lead, null, $headers, $metadata)
+                : $this->evolutionApiService->sendTextWithBalancing($phoneNumber, $interpolatedMessage, $lead, null, $headers, $metadata);
 
             $messageId = $response['data']['key']['id'] ?? null;
 

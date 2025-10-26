@@ -61,7 +61,7 @@ class CampaignSubscriber implements EventSubscriberInterface
                 'description' => 'mautic.evolution.campaign.action.send_message.tooltip',
                 'eventName' => 'mautic.evolution.send_message',
                 'formType' => 'MauticPlugin\MauticEvolutionBundle\Form\Type\SendMessageActionType',
-                'formTheme' => '@MauticEvolution/FormTheme/SendMessageAction/_sendmessageaction_widget.html.twig',
+                'formTheme' => '@MauticEvolution/FormTheme/SendMessageAction/theme.html.twig',
                 'channel' => 'whatsapp',
                 'channelIdField' => 'phone',
             ]
@@ -75,7 +75,7 @@ class CampaignSubscriber implements EventSubscriberInterface
                 'description' => 'mautic.evolution.campaign.action.send_template.tooltip',
                 'eventName' => 'mautic.evolution.send_template',
                 'formType' => 'MauticPlugin\MauticEvolutionBundle\Form\Type\SendTemplateActionType',
-                'formTheme' => '@MauticEvolution/FormTheme/SendTemplateAction/_sendtemplateaction_widget.html.twig',
+                'formTheme' => '@MauticEvolution/FormTheme/SendTemplateAction/theme.html.twig',
                 'channel' => 'whatsapp',
                 'channelIdField' => 'phone',
             ]
@@ -95,6 +95,8 @@ class CampaignSubscriber implements EventSubscriberInterface
             $message = $config['message'] ?? '';
             $phoneField = $config['phone_field'] ?? 'mobile';
             $groupAlias = $config['group_alias'] ?? null;
+            $headers = $this->normalizeKeyValueCollection($config['headers'] ?? []);
+            $metadata = $this->normalizeKeyValueCollection($config['data'] ?? []);
 
             if (empty($message)) {
                 $event->setResult(false);
@@ -108,7 +110,7 @@ class CampaignSubscriber implements EventSubscriberInterface
             }
 
             // Envia mensagem com suporte a group alias e phone field
-            $result = $this->messageModel->sendMessage($lead, $message, null, $groupAlias, $phoneField);
+            $result = $this->messageModel->sendMessage($lead, $message, null, $groupAlias, $phoneField, $headers, $metadata);
 
             if ($result) {
                 $event->setResult(true);
@@ -137,6 +139,8 @@ class CampaignSubscriber implements EventSubscriberInterface
             $templateId = $config['template'] ?? null;
             $phoneField = $config['phone_field'] ?? 'mobile';
             $groupAlias = $config['group_alias'] ?? null;
+            $headers = $this->normalizeKeyValueCollection($config['headers'] ?? []);
+            $metadata = $this->normalizeKeyValueCollection($config['data'] ?? []);
 
             if (empty($templateId)) {
                 $event->setResult(false);
@@ -163,7 +167,7 @@ class CampaignSubscriber implements EventSubscriberInterface
             $templateContent = $template->getContent();
 
             // Enviar mensagem usando o template, com suporte a group alias e phone field
-            $result = $this->messageModel->sendMessage($lead, $templateContent, $template->getName(), $groupAlias, $phoneField);
+            $result = $this->messageModel->sendMessage($lead, $templateContent, $template->getName(), $groupAlias, $phoneField, $headers, $metadata);
 
             if ($result) {
                 $event->setResult(true);
@@ -177,5 +181,42 @@ class CampaignSubscriber implements EventSubscriberInterface
             $event->setResult(false);
             $event->setFailed('Erro ao enviar template: ' . $e->getMessage());
         }
+    }
+
+    private function normalizeKeyValueCollection(array $pairs): array
+    {
+        $assoc = [];
+
+        // Support SortableListType transformer that may wrap values under 'list'
+        $items = isset($pairs['list']) && is_array($pairs['list']) ? $pairs['list'] : $pairs;
+
+        // If associative array (key_value_pairs => true), map directly
+        $hasZeroIndex = array_key_exists(0, $items);
+        $hasStringKeys = !empty(array_filter(array_keys($items), fn($k) => is_string($k)));
+        if (!$hasZeroIndex && $hasStringKeys) {
+            foreach ($items as $key => $value) {
+                $k = trim((string) $key);
+                $v = trim((string) ($value ?? ''));
+                if ($k !== '' && $v !== '') {
+                    $assoc[$k] = $v;
+                }
+            }
+            return $assoc;
+        }
+
+        // Otherwise expect array of arrays with either 'key'/'value' or 'label'/'value'
+        foreach ($items as $pair) {
+            if (is_array($pair)) {
+                $k = isset($pair['key']) ? (string) $pair['key'] : (isset($pair['label']) ? (string) $pair['label'] : '');
+                $v = isset($pair['value']) ? (string) $pair['value'] : '';
+                $k = trim($k);
+                $v = trim($v);
+                if ($k !== '' && $v !== '') {
+                    $assoc[$k] = $v;
+                }
+            }
+        }
+
+        return $assoc;
     }
 }
