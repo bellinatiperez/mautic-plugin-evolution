@@ -77,6 +77,10 @@ class MessageModel extends FormModel
             // Then use TokenHelper to replace the tokens
             $interpolatedMessage = TokenHelper::findLeadTokens($message, $leadData, true);
 
+            // Parse headers and metadata with lead tokens
+            $parsedHeaders = $this->interpolateTokensInMap($headers, $lead);
+            $parsedMetadata = $this->interpolateTokensInMap($metadata, $lead, false);
+
             // Create message entity
             $evolutionMessage = new EvolutionMessage();
             $evolutionMessage->setLead($lead);
@@ -84,14 +88,14 @@ class MessageModel extends FormModel
             $evolutionMessage->setMessageContent($interpolatedMessage);
             $evolutionMessage->setTemplateName($templateName);
             $evolutionMessage->setStatus('pending');
-            if (!empty($metadata)) {
-                $evolutionMessage->setMetadata($metadata);
+            if (!empty($parsedMetadata)) {
+                $evolutionMessage->setMetadata($parsedMetadata);
             }
 
             // Send via API
             $response = !empty($groupAlias)
-                ? $this->evolutionApiService->sendTextWithGroupBalancing($groupAlias, $phoneNumber, $interpolatedMessage, [], $lead, null, $headers, $metadata)
-                : $this->evolutionApiService->sendTextWithBalancing($phoneNumber, $interpolatedMessage, $lead, null, $headers, $metadata);
+                ? $this->evolutionApiService->sendTextWithGroupBalancing($groupAlias, $phoneNumber, $interpolatedMessage, [], $lead, null, $parsedHeaders, $parsedMetadata)
+                : $this->evolutionApiService->sendTextWithBalancing($phoneNumber, $interpolatedMessage, $lead, null, $parsedHeaders, $parsedMetadata);
 
             $messageId = $response['data']['key']['id'] ?? null;
 
@@ -115,6 +119,72 @@ class MessageModel extends FormModel
             
             return null;
         }
+    }
+
+    /**
+     * Interpolate tokens inside a key-value map using lead data.
+     * Converts simple tokens {firstname} to {contactfield=firstname} before replacement.
+     * If $headersMode is true, keeps values as strings (HTTP header semantics).
+     */
+    private function interpolateTokensInMap(array $map, Lead $lead, bool $headersMode = true): array
+    {
+        if (empty($map)) {
+            return [];
+        }
+
+        $leadData = $lead->getProfileFields();
+        $out = [];
+        foreach ($map as $key => $value) {
+            if (!is_string($key) || trim((string) $key) === '') {
+                continue;
+            }
+            $k = trim((string) $key);
+            $v = is_string($value) ? $value : (string) $value;
+            // Convert {field} -> {contactfield=field}
+            $v = preg_replace('/\{([a-zA-Z_][a-zA-Z0-9_]*)\}/', '{contactfield=$1}', $v);
+            $v = TokenHelper::findLeadTokens($v, $leadData, true);
+            // Cast types for metadata; keep strings for headers
+            if ($headersMode) {
+                $out[$k] = $v;
+            } else {
+                $out[$k] = $this->castScalar($v);
+            }
+        }
+
+        // Log preview for debugging
+        $this->logger->info('Evolution MessageModel - parsed pairs', [
+            'headers_mode' => $headersMode,
+            'keys' => array_keys($out),
+        ]);
+
+        return $out;
+    }
+
+    /**
+     * Cast a scalar string to bool/int/float/null when appropriate.
+     */
+    private function castScalar(mixed $value): mixed
+    {
+        if (is_bool($value) || is_int($value) || is_float($value) || $value === null) {
+            return $value;
+        }
+        if (is_string($value)) {
+            $trim = trim($value);
+            if (strcasecmp($trim, 'true') === 0) {
+                return true;
+            }
+            if (strcasecmp($trim, 'false') === 0) {
+                return false;
+            }
+            if (strcasecmp($trim, 'null') === 0) {
+                return null;
+            }
+            if (is_numeric($trim)) {
+                return strpos($trim, '.') !== false ? (float) $trim : (int) $trim;
+            }
+            return $value;
+        }
+        return $value;
     }
 
     /**

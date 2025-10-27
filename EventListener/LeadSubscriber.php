@@ -52,6 +52,14 @@ class LeadSubscriber implements EventSubscriberInterface
             return;
         }
 
+        // Respeita configuração para evitar checagem de WhatsApp
+        if (method_exists($this->evolutionApiService, 'shouldCheckWhatsapp') && !$this->evolutionApiService->shouldCheckWhatsapp()) {
+            $this->logger->info('WhatsApp check skipped by configuration', [
+                'lead_id' => $lead->getId(),
+            ]);
+            return;
+        }
+
         try {
             // Verifica se o número existe no WhatsApp
             $this->checkWhatsAppNumber($phoneNumber, $lead->getId());
@@ -94,6 +102,15 @@ class LeadSubscriber implements EventSubscriberInterface
                     'lead_id' => $leadId,
                     'phone' => $phoneNumber,
                     'exists' => $result['exists'],
+                ]);
+            }
+            // Loga status-code quando houver falha para suporte
+            if ($result && isset($result['success']) && $result['success'] === false) {
+                $this->logger->warning('WhatsApp check failed', [
+                    'lead_id' => $leadId,
+                    'phone' => $phoneNumber,
+                    'status_code' => $result['status_code'] ?? null,
+                    'error' => $result['error'] ?? null,
                 ]);
             }
         } catch (\Exception $e) {

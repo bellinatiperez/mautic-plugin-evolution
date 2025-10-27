@@ -48,33 +48,27 @@ class EvolutionApiService
     /**
      * Envia mensagem de texto via Evolution API
      */
-    public function sendTextMessage(string $number, string $message, Lead $contact = null, CampaignExecutionEvent $event = null): array
+    public function sendTextMessage(string $number, string $message, Lead $contact = null, CampaignExecutionEvent $event = null, array $customHeaders = [], array $metadata = []): array
     {
-        $data = [
-            'number' => $number,
-            'text' => $message,
-        ];
+        $data = $this->buildTextPayload($number, $message, $metadata);
 
-        return $this->makeRequest('POST', '/message/sendText/' . $this->getInstance(), $data, $contact, $event);
+        return $this->makeRequest('POST', '/message/sendText/' . $this->getInstance(), $data, $contact, $event, $customHeaders);
     }
 
     /**
      * Envia mensagem de texto with balancing via Evolution API
      */
-    public function sendTextWithBalancing(string $number, string $message, Lead $contact = null, CampaignExecutionEvent $event = null): array
+    public function sendTextWithBalancing(string $number, string $message, Lead $contact = null, CampaignExecutionEvent $event = null, array $customHeaders = [], array $metadata = []): array
     {
-        $data = [
-            'number' => $number,
-            'text' => $message,
-        ];
+        $data = $this->buildTextPayload($number, $message, $metadata);
 
-        return $this->makeRequest('POST', '/message/sendTextWithBalancing/', $data, $contact, $event);
+        return $this->makeRequest('POST', '/message/sendTextWithBalancing/', $data, $contact, $event, $customHeaders);
     }
 
     /**
      * Envia texto utilizando balanceamento por grupo (usa alias do grupo)
      */
-    public function sendTextWithGroupBalancing(string $alias, string $number, string $text, array $options = [], Lead $contact = null, CampaignExecutionEvent $event = null): array
+    public function sendTextWithGroupBalancing(string $alias, string $number, string $text, array $options = [], Lead $contact = null, CampaignExecutionEvent $event = null, array $customHeaders = [], array $metadata = []): array
     {
         $data = [
             'alias' => $alias,
@@ -93,7 +87,11 @@ class EvolutionApiService
             $data['mentioned'] = $options['mentioned'];
         }
 
-        return $this->makeRequest('POST', '/message/sendTextWithGroupBalancing', $data, $contact, $event);
+        // Metadados opcionais
+        if (!empty($metadata)) {
+            $data['metadata'] = $this->sanitizeKeyValueMap($metadata);
+        }
+        return $this->makeRequest('POST', '/message/sendTextWithGroupBalancing', $data, $contact, $event, $customHeaders);
     }
 
     /**
@@ -208,17 +206,55 @@ class EvolutionApiService
      */
     public function checkWhatsAppNumber(string $number, Lead $contact = null, CampaignExecutionEvent $event = null): array
     {
+        // Sanitiza/normaliza número para formato aceito pela API
+        $normalized = $this->formatPhoneNumber($number);
         $data = [
-            'numbers' => [$number],
+            'numbers' => [$normalized],
         ];
 
-        return $this->makeRequest('POST', '/chat/whatsappNumbers/' . $this->getInstance(), $data, $contact, $event);
+        $instance = $this->getInstance();
+        $attempts = [
+            // Sem instância na rota
+            '/chat/whatsappNumbers',
+            // Com instância em path
+            '/chat/whatsappNumbers/' . $instance,
+            // Com instância em query param
+            '/chat/whatsappNumbers?instance=' . urlencode($instance),
+            // Variação de rota
+            '/chat/checkWhatsappNumbers/' . $instance,
+        ];
+
+        $lastResult = null;
+        foreach ($attempts as $endpoint) {
+            $this->logger->info('Evolution API - checkWhatsAppNumber attempt', [
+                'endpoint' => $endpoint,
+                'numbers' => $data['numbers'],
+            ]);
+
+            $result = $this->makeRequest('POST', $endpoint, $data, $contact, $event);
+            $lastResult = $result;
+            if (isset($result['success']) && $result['success'] === true) {
+                return $result;
+            }
+
+            // Se não for 404, encerra tentativas
+            if (isset($result['status_code']) && (int) $result['status_code'] !== 404) {
+                break;
+            }
+        }
+
+        // Retorna último resultado ou erro padrão
+        return $lastResult ?? [
+            'success' => false,
+            'error' => 'WhatsApp check failed for all endpoints',
+            'status_code' => 404,
+        ];
     }
 
     /**
      * Faz requisição para a Evolution API
      */
-    private function makeRequest(string $method, string $endpoint, array $data = [], Lead $contact = null, CampaignExecutionEvent $event = null): array
+    private function makeRequest(string $method, string $endpoint, array $data = [], Lead $contact = null, CampaignExecutionEvent $event = null, array $customHeaders = []): array
     {
         $apiUrl = $this->getApiUrl();
         $apiKey = $this->getApiKey();
@@ -247,6 +283,12 @@ class EvolutionApiService
             'Content-Type' => 'application/json',
             'apikey' => $apiKey,
         ];
+        // Merge custom headers (without removing required defaults)
+        foreach ($customHeaders as $hKey => $hVal) {
+            if (is_string($hKey) && $hKey !== '') {
+                $headers[$hKey] = (string) $hVal;
+            }
+        }
 
         try {
             $this->logger->info('Evolution API Request', [
@@ -309,8 +351,18 @@ class EvolutionApiService
                 'status_code' => $response->getStatusCode()
             ];
             
-            // Caso o código de status não seja 2xx, trata como erro
-            throw new \Exception('Erro na requisição, status code: ' . json_encode($errorDetails));
+            // Caso o código de status não seja 2xx, retorna erro estruturado (sem lançar exceção)
+            if ((int) $response->getStatusCode() === 404) {
+                $this->logger->warning('Evolution API HTTP 404', $errorDetails);
+            } else {
+                $this->logger->error('Evolution API HTTP error', $errorDetails);
+            }
+            return [
+                'success' => false,
+                'error' => 'HTTP error',
+                'status_code' => $response->getStatusCode(),
+                'response' => $errorDetails['data'],
+            ];
             
         } catch (GuzzleException $e) {
             $errorMessage = $e->getMessage();
@@ -355,6 +407,86 @@ class EvolutionApiService
                 'status_code' => $e->getCode(),
             ];
         }
+    }
+
+    /**
+     * Constrói payload para envio de texto, incluindo metadata
+     * @return array{number: string, text: string, metadata?: array<string, mixed>}
+     */
+    public function buildTextPayload(string $number, string $text, array $metadata = []): array
+    {
+        $payload = [
+            'number' => $this->formatPhoneNumber($number),
+            'text' => $text,
+        ];
+
+        if (!empty($metadata)) {
+            $payload['metadata'] = $this->sanitizeKeyValueMap($metadata);
+        }
+
+        // Log para depuração do payload
+        $this->logger->info('Evolution API - Payload construído', [
+            'payload_preview' => [
+                'number' => $payload['number'],
+                'text_len' => strlen($payload['text'] ?? ''),
+                'has_metadata' => isset($payload['metadata']) && is_array($payload['metadata']) && count($payload['metadata']) > 0,
+                'metadata_keys' => isset($payload['metadata']) ? array_keys($payload['metadata']) : [],
+            ],
+        ]);
+
+        return $payload;
+    }
+
+    /**
+     * Sanitiza e tipa valores para mapa chave-valor do payload/headers
+     * Garante chaves string e valores escalares coerentes (bool/int/float/null/string)
+     * @param array<string,mixed> $map
+     * @return array<string,mixed>
+     */
+    private function sanitizeKeyValueMap(array $map): array
+    {
+        $result = [];
+        foreach ($map as $key => $value) {
+            if (!is_string($key) || trim($key) === '') {
+                continue;
+            }
+            $result[trim($key)] = $this->castScalar($value);
+        }
+        return $result;
+    }
+
+    /**
+     * Converte string para tipo escalar apropriado
+     * - "true"/"false" -> bool
+     * - números -> int/float
+     * - "null" -> null
+     * - JSON objects/arrays -> mantém string (compatibilidade) a menos que parsing seja estritamente necessário
+     */
+    private function castScalar(mixed $value): mixed
+    {
+        if (is_bool($value) || is_int($value) || is_float($value) || $value === null) {
+            return $value;
+        }
+        if (is_string($value)) {
+            $trim = trim($value);
+            if (strcasecmp($trim, 'true') === 0) {
+                return true;
+            }
+            if (strcasecmp($trim, 'false') === 0) {
+                return false;
+            }
+            if (strcasecmp($trim, 'null') === 0) {
+                return null;
+            }
+            // numérico
+            if (is_numeric($trim)) {
+                // int vs float
+                return strpos($trim, '.') !== false ? (float) $trim : (int) $trim;
+            }
+            return $value; // mantém string
+        }
+        // arrays/objects: mantém como está (API pode aceitar)
+        return $value;
     }
 
     /**
@@ -539,6 +671,20 @@ class EvolutionApiService
         }
 
         return $this->getInstanceStatus($event);
+    }
+
+    /**
+     * Indica se a checagem de número WhatsApp deve ser realizada
+     * Controlado via feature settings (ex.: check_whatsapp_on_save)
+     */
+    public function shouldCheckWhatsapp(): bool
+    {
+        $settings = $this->getIntegrationSettings();
+        $enabled = (bool) ($settings['check_whatsapp_on_save'] ?? false);
+        $this->logger->info('Evolution API - shouldCheckWhatsapp', [
+            'check_whatsapp_on_save' => $enabled,
+        ]);
+        return $enabled;
     }
 
     /**

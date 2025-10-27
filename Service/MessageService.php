@@ -48,16 +48,25 @@ class MessageService
         // Processa tokens no conteúdo da mensagem
         $processedMessage = $this->processMessageTokens($message, $lead);
 
+        // Extrai headers e metadata das opções e interpola tokens do lead
+        $rawHeaders = isset($options['headers']) && is_array($options['headers']) ? $options['headers'] : [];
+        $rawMetadata = isset($options['metadata']) && is_array($options['metadata']) ? $options['metadata'] : (isset($options['data']) && is_array($options['data']) ? $options['data'] : []);
+        $headers = $this->interpolatePairs($rawHeaders, $lead, true);
+        $metadata = $this->interpolatePairs($rawMetadata, $lead, false);
+
         // Cria registro da mensagem
         $evolutionMessage = new EvolutionMessage();
         $evolutionMessage->setLead($lead);
         $evolutionMessage->setPhoneNumber($phoneNumber);
         $evolutionMessage->setMessageContent($processedMessage);
         $evolutionMessage->setStatus('pending');
+        if (!empty($metadata)) {
+            $evolutionMessage->setMetadata($metadata);
+        }
 
         try {
             // Envia mensagem via Evolution API
-            $response = $this->evolutionApiService->sendTextMessage($phoneNumber, $processedMessage, $lead);
+            $response = $this->evolutionApiService->sendTextMessage($phoneNumber, $processedMessage, $lead, null, $headers, $metadata);
 
             if ($response['success']) {
                 $evolutionMessage->setStatus('sent');
@@ -71,6 +80,8 @@ class MessageService
                     'lead_id' => $lead->getId(),
                     'phone' => $phoneNumber,
                     'message_id' => $evolutionMessage->getMessageId(),
+                    'headers_keys' => array_keys($headers),
+                    'metadata_keys' => array_keys($metadata),
                 ]);
             } else {
                 $evolutionMessage->setStatus('failed');
@@ -80,6 +91,8 @@ class MessageService
                     'lead_id' => $lead->getId(),
                     'phone' => $phoneNumber,
                     'error' => $response['error'] ?? 'Erro desconhecido',
+                    'headers_keys' => array_keys($headers),
+                    'metadata_keys' => array_keys($metadata),
                 ]);
             }
         } catch (\Exception $e) {
@@ -90,6 +103,8 @@ class MessageService
                 'lead_id' => $lead->getId(),
                 'phone' => $phoneNumber,
                 'exception' => $e->getMessage(),
+                'headers_keys' => array_keys($headers),
+                'metadata_keys' => array_keys($metadata),
             ]);
         }
 
@@ -450,6 +465,63 @@ class MessageService
 
         // Sobrescreve com variáveis customizadas
         return array_merge($variables, $customVariables);
+    }
+
+    /**
+     * Interpola tokens do lead em pares chave-valor.
+     * Quando $isHeader for true, normaliza chaves e ignora entradas vazias.
+     */
+    private function interpolatePairs(array $pairs, Lead $lead, bool $isHeader = false): array
+    {
+        $result = [];
+        foreach ($pairs as $key => $value) {
+            if (!is_string($key)) {
+                $key = (string) $key;
+            }
+            $resolvedKey = $this->processMessageTokens($key, $lead);
+            $resolvedVal = is_string($value) ? $this->processMessageTokens($value, $lead) : $value;
+
+            if ($isHeader) {
+                $resolvedKey = trim($resolvedKey);
+            }
+
+            if ($resolvedKey === '') {
+                continue;
+            }
+
+            if (is_string($resolvedVal)) {
+                $resolvedVal = $this->castScalar($resolvedVal);
+            }
+
+            $result[$resolvedKey] = $resolvedVal;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Converte string em tipo escalar (int, float, bool, null) quando aplicável.
+     */
+    private function castScalar(string $value)
+    {
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return '';
+        }
+        $lower = strtolower($trimmed);
+        if ($lower === 'true') {
+            return true;
+        }
+        if ($lower === 'false') {
+            return false;
+        }
+        if ($lower === 'null') {
+            return null;
+        }
+        if (is_numeric($trimmed)) {
+            return strpos($trimmed, '.') !== false ? (float) $trimmed : (int) $trimmed;
+        }
+        return $value;
     }
 
     /**

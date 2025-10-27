@@ -11,6 +11,8 @@
 namespace MauticPlugin\MauticEvolutionBundle\Integration;
 
 // Importação de todas as classes necessárias para a integração
+use Mautic\CoreBundle\Form\Type\YesNoButtonGroupType;             // Tipo de campo sim/não
+use Symfony\Component\Form\FormBuilder;                            // Para builder tipado
 use Doctrine\ORM\EntityManager;                           // Para operações no banco de dados
 use Mautic\CoreBundle\Helper\CacheStorageHelper;          // Para gerenciamento de cache
 use Mautic\CoreBundle\Helper\EncryptionHelper;            // Para criptografia de dados sensíveis
@@ -172,6 +174,34 @@ class MauticEvolutionIntegration extends AbstractIntegration
             'requires_callback'      => false,    // Não precisa de URL de callback
             'requires_authorization' => false,    // Não precisa de autorização especial
         ];
+    }
+
+    /**
+     * Adiciona campos customizados ao formulário da integração.
+     * Permite expor configurações adicionais na área de 'features'.
+     *
+     * @param \Mautic\PluginBundle\Integration\Form|FormBuilder $builder
+     * @param array                                                $data
+     * @param string                                               $formArea
+     */
+    public function appendToForm(&$builder, $data, $formArea): void
+    {
+        if ('features' === $formArea) {
+            $builder->add(
+                'check_whatsapp_on_save',
+                YesNoButtonGroupType::class,
+                [
+                    'label'      => 'mautic.evolution.integration.check_whatsapp_on_save',
+                    'label_attr' => ['class' => 'control-label'],
+                    'attr'       => [
+                        'class'   => 'form-control',
+                        'tooltip' => 'mautic.evolution.integration.check_whatsapp_on_save.tooltip',
+                    ],
+                    'data'     => isset($data['check_whatsapp_on_save']) ? (bool) $data['check_whatsapp_on_save'] : false,
+                    'required' => false,
+                ]
+            );
+        }
     }
 
     /**
